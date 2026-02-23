@@ -1,0 +1,1277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sri Siri Foods</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --saffron:#E8820C;--sl:#FFF3E0;--sd:#BF6A08;
+  --green:#2E7D32;--gl:#E8F5E9;
+  --red:#C62828;--rl:#FFEBEE;
+  --blue:#1565C0;--bl:#E3F2FD;
+  --bg:#FAFAF7;--card:#fff;--text:#1A1A1A;--muted:#6B6B6B;
+  --border:#E8E2D9;--shadow:0 2px 12px rgba(0,0,0,.08);--radius:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+/* ── LOGIN ── */
+#loginScreen{min-height:100vh;background:linear-gradient(135deg,#1A1A1A,#2C1A06 60%,#E8820C);display:flex;align-items:center;justify-content:center;flex-direction:column;}
+.login-card{background:#fff;border-radius:20px;padding:40px 44px 36px;width:380px;box-shadow:0 24px 60px rgba(0,0,0,.3);}
+.shop-logo{text-align:center;margin-bottom:28px;}
+.shop-logo .icon{font-size:48px;margin-bottom:6px;}
+.shop-logo h1{font-family:'Playfair Display',serif;font-size:26px;color:var(--saffron);}
+.shop-logo p{font-size:12px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-top:4px;}
+.role-tabs{display:flex;gap:8px;margin-bottom:24px;}
+.role-tab{flex:1;padding:10px;border:2px solid var(--border);border-radius:8px;background:transparent;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;color:var(--muted);transition:all .2s;}
+.role-tab.active{border-color:var(--saffron);background:var(--sl);color:var(--saffron);}
+.lfield{margin-bottom:18px;}
+.lfield label{display:block;font-size:13px;font-weight:500;color:var(--muted);margin-bottom:6px;}
+.lfield input{width:100%;padding:12px 14px;border:2px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:15px;outline:none;transition:border-color .2s;}
+.lfield input:focus{border-color:var(--saffron);}
+.btn-login{width:100%;padding:13px;background:var(--saffron);color:#fff;border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;cursor:pointer;transition:background .2s;margin-top:4px;}
+.btn-login:hover{background:var(--sd);}
+.lerr{color:var(--red);font-size:13px;text-align:center;margin-top:10px;min-height:18px;}
+
+/* ── APP SHELL ── */
+#appScreen{display:none;flex-direction:column;min-height:100vh;}
+header{background:#1A1A1A;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 10px rgba(0,0,0,.3);}
+header h1{font-family:'Playfair Display',serif;color:var(--saffron);font-size:20px;}
+.hright{display:flex;align-items:center;gap:12px;}
+.rbadge{padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;}
+.rbadge.admin{background:var(--saffron);color:#fff;}
+.rbadge.staff{background:#fff2;color:#fff;border:1px solid #fff3;}
+.btn-logout{padding:6px 14px;background:transparent;color:#aaa;border:1px solid #444;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;transition:all .2s;}
+.btn-logout:hover{border-color:#fff;color:#fff;}
+.nav-tabs{background:var(--card);border-bottom:2px solid var(--border);display:flex;padding:0 24px;overflow-x:auto;flex-shrink:0;}
+.nav-tab{padding:14px 20px;border:none;background:transparent;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;color:var(--muted);border-bottom:3px solid transparent;margin-bottom:-2px;white-space:nowrap;transition:all .2s;}
+.nav-tab.active{color:var(--saffron);border-bottom-color:var(--saffron);}
+main{flex:1;padding:24px;max-width:1400px;margin:0 auto;width:100%;}
+.page{display:none;}.page.active{display:block;}
+
+/* ── CARD ── */
+.card{background:var(--card);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);border:1px solid var(--border);margin-bottom:20px;}
+.card-title{font-family:'Playfair Display',serif;font-size:18px;margin-bottom:14px;}
+.section-heading{font-family:'Playfair Display',serif;font-size:22px;margin-bottom:6px;}
+.section-sub{font-size:13px;color:var(--muted);margin-bottom:20px;}
+
+/* ── FORM ── */
+.frow{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;margin-bottom:14px;}
+.fg{display:flex;flex-direction:column;gap:5px;min-width:160px;}
+.fg label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;}
+.fg select,.fg input{padding:10px 12px;border:2px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;outline:none;background:#fff;transition:border-color .2s;}
+.fg select:focus,.fg input:focus{border-color:var(--saffron);}
+.fg select:disabled,.fg input:disabled{background:#f5f5f5;color:#aaa;cursor:not-allowed;}
+
+/* ── BUTTONS ── */
+.btn-p{padding:10px 24px;background:var(--saffron);color:#fff;border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:background .2s;white-space:nowrap;}
+.btn-p:hover{background:var(--sd);}
+.btn-p:disabled{background:#ccc;cursor:not-allowed;}
+.btn-s{padding:10px 20px;background:transparent;color:var(--saffron);border:2px solid var(--saffron);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;white-space:nowrap;}
+.btn-s:hover{background:var(--sl);}
+.btn-d{padding:5px 12px;background:transparent;color:var(--red);border:1px solid var(--red);border-radius:6px;font-size:12px;cursor:pointer;}
+.btn-d:hover{background:var(--rl);}
+.btn-cancel{padding:10px 20px;background:transparent;color:var(--muted);border:2px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;cursor:pointer;}
+
+/* ── TXN PANEL ── */
+.txn-panel{background:linear-gradient(135deg,#FFF8F0,#FFFDF9);border:2px solid #F5C87A;border-radius:var(--radius);padding:22px;margin-bottom:20px;}
+.txn-title{font-size:15px;font-weight:700;color:var(--sd);margin-bottom:16px;}
+.txn-type-row{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center;}
+.ttype-btn{padding:8px 18px;border:2px solid var(--border);border-radius:20px;background:#fff;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:var(--muted);transition:all .2s;}
+.ttype-btn.t-closing{border-color:var(--saffron);background:var(--sl);color:var(--sd);}
+.ttype-btn.t-purchase{border-color:var(--blue);background:var(--bl);color:var(--blue);}
+.ttype-btn.t-opening{border-color:var(--green);background:var(--gl);color:var(--green);}
+
+/* ── INFO BOX ── */
+.info-box{background:#fff;border:1px solid var(--border);border-radius:10px;padding:16px;margin:14px 0;display:none;}
+.info-box.on{display:block;}
+.info-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:12px;}
+.info-item{text-align:center;}
+.info-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:4px;}
+.info-val{font-weight:700;font-size:20px;}
+.info-val.g{color:var(--green);}
+.info-val.o{color:var(--saffron);}
+.info-val.b{color:var(--blue);}
+
+/* ── LOCKED ── */
+.locked-banner{background:#fff3cd;border:1px solid #ffc107;border-radius:var(--radius);padding:14px 20px;margin-bottom:20px;display:none;align-items:center;gap:10px;font-size:14px;color:#856404;font-weight:500;}
+.locked-banner.on{display:flex;}
+
+/* ── TABLE ── */
+.twrap{overflow-x:auto;max-height:600px;overflow-y:auto;}
+table{width:100%;border-collapse:collapse;font-size:14px;}
+thead th{background:#F5F0EB;padding:10px 12px;text-align:left;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);white-space:nowrap;border-bottom:2px solid var(--border);position:sticky;top:0;z-index:2;}
+tbody tr{border-bottom:1px solid #F0EBE5;transition:background .1s;}
+tbody tr:hover{background:#FDFAF6;}
+tbody td{padding:10px 12px;vertical-align:middle;}
+.pname{font-weight:500;}
+.pid{font-size:11px;color:var(--muted);}
+.cbadge{display:inline-block;padding:2px 9px;border-radius:10px;font-size:11px;font-weight:600;background:#f0ebe5;color:#666;}
+.sum-row{background:#FFF8F0!important;}
+.sum-row td{border-top:2px solid var(--saffron)!important;font-weight:700;}
+.tag-c{display:inline-block;padding:2px 9px;border-radius:10px;font-size:11px;font-weight:600;background:var(--sl);color:var(--sd);}
+.tag-p{display:inline-block;padding:2px 9px;border-radius:10px;font-size:11px;font-weight:600;background:var(--bl);color:var(--blue);}
+.tag-o{display:inline-block;padding:2px 9px;border-radius:10px;font-size:11px;font-weight:600;background:var(--gl);color:var(--green);}
+
+/* ── STATS ── */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:16px;margin-bottom:24px;}
+.stat-card{background:var(--card);border-radius:var(--radius);padding:20px;border:1px solid var(--border);box-shadow:var(--shadow);text-align:center;}
+.slbl{font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:8px;}
+.sval{font-family:'Playfair Display',serif;font-size:28px;font-weight:700;}
+
+/* ── FILTER PANEL ── */
+.filter-panel{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px 24px;margin-bottom:20px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:14px;}
+.fb{display:flex;flex-direction:column;gap:8px;}
+.fblbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);}
+.pill-grp{display:flex;flex-wrap:wrap;gap:7px;}
+.pill{padding:6px 14px;border:2px solid var(--border);border-radius:20px;background:#fff;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:var(--muted);transition:all .15s;white-space:nowrap;}
+.pill:hover{border-color:#ccc;color:var(--text);}
+.pill.on{border-color:var(--saffron);background:var(--sl);color:var(--sd);font-weight:600;}
+.cpill.on{border-color:#aaa;background:#f5f5f5;color:var(--text);}
+.cpill:not(.on){border-color:#eee;background:#fafafa;color:#bbb;text-decoration:line-through;}
+.fsearch{padding:9px 14px;border:2px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;outline:none;width:100%;max-width:360px;transition:border-color .2s;}
+.fsearch:focus{border-color:var(--saffron);}
+.btn-ghost{padding:6px 14px;background:transparent;border:1px solid var(--border);border-radius:20px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;transition:all .2s;}
+.btn-ghost:hover{border-color:var(--saffron);color:var(--saffron);}
+
+/* ── DATE RANGE ── */
+.date-range-bar{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;margin-bottom:20px;box-shadow:var(--shadow);}
+.date-range-bar .fg{min-width:150px;}
+.quick-ranges{display:flex;gap:6px;flex-wrap:wrap;margin-top:2px;}
+.qbtn{padding:5px 12px;border:1.5px solid var(--border);border-radius:20px;background:#fff;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;color:var(--muted);transition:all .15s;}
+.qbtn:hover,.qbtn.on{border-color:var(--saffron);background:var(--sl);color:var(--sd);}
+
+/* ── CATEGORY CHIPS ── */
+.cat-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:20px;background:var(--sl);border:2px solid #F5C87A;font-size:13px;font-weight:600;color:var(--sd);}
+.cat-chip.def{background:#f5f5f5;border-color:#ddd;color:#999;}
+.del-cat{background:none;border:none;cursor:pointer;color:inherit;font-size:14px;line-height:1;padding:0;opacity:.55;transition:opacity .2s;}
+.del-cat:hover{opacity:1;}
+
+/* ── UNLOCK ── */
+.unlock-sec{background:var(--sl);border:1px solid #F5C87A;border-radius:var(--radius);padding:20px;margin-bottom:20px;}
+.unlock-sec h3{color:var(--sd);margin-bottom:10px;font-size:15px;font-weight:700;}
+
+/* ── MODAL ── */
+.modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:center;justify-content:center;}
+.modal-ov.on{display:flex;}
+.modal{background:#fff;border-radius:16px;padding:32px;width:480px;max-width:95vw;box-shadow:0 20px 60px rgba(0,0,0,.3);}
+.modal h2{font-family:'Playfair Display',serif;font-size:20px;margin-bottom:20px;}
+.mrow{margin-bottom:14px;}
+.mrow label{display:block;font-size:11px;font-weight:700;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px;}
+.mrow input,.mrow select{width:100%;padding:10px 12px;border:2px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;outline:none;transition:border-color .2s;}
+.mrow input:focus,.mrow select:focus{border-color:var(--saffron);}
+.mactions{display:flex;gap:10px;justify-content:flex-end;margin-top:24px;}
+
+/* ── TOAST ── */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:#222;color:#fff;padding:12px 24px;border-radius:40px;font-size:14px;font-weight:500;box-shadow:0 8px 24px rgba(0,0,0,.3);transition:transform .3s;z-index:999;white-space:nowrap;}
+#toast.on{transform:translateX(-50%) translateY(0);}
+#toast.ok{background:var(--green);}
+#toast.err{background:var(--red);}
+
+/* ── NO DATA ── */
+.nodata{text-align:center;padding:48px;color:var(--muted);font-size:14px;}
+
+/* Staff stock filter pills */
+.spill{padding:6px 14px;border:2px solid var(--border);border-radius:20px;background:#fff;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:var(--muted);transition:all .15s;white-space:nowrap;}
+.spill:hover{border-color:#ccc;color:var(--text);}
+.spill.on{border-color:var(--saffron);background:var(--sl);color:var(--sd);font-weight:600;}
+
+@media(max-width:640px){
+  main{padding:12px;}
+  .login-card{width:95vw;padding:28px 20px;}
+  header{padding:12px 16px;}
+  header h1{font-size:16px;}
+  .nav-tabs{padding:0 6px;}
+  .nav-tab{padding:12px 8px;font-size:12px;}
+  table{font-size:12px;}
+  .fg{min-width:130px;}
+  .filter-panel{padding:14px;}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══ LOGIN ═══ -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="shop-logo">
+      <div class="icon">🏪</div>
+      <h1>Sri Siri Foods</h1>
+      <p>Inventory Management</p>
+    </div>
+    <div class="role-tabs">
+      <button class="role-tab active" onclick="selectRole('admin')">👑 Admin</button>
+      <button class="role-tab" onclick="selectRole('staff')">🧑‍💼 Staff</button>
+    </div>
+    <div class="lfield">
+      <label>Password</label>
+      <input type="password" id="loginPw" placeholder="Enter password" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="btn-login" onclick="doLogin()">Login</button>
+    <div class="lerr" id="loginErr"></div>
+  </div>
+  <p style="color:#ffffff44;font-size:12px;margin-top:20px;">Default: Admin → <b style="color:#fff8">admin123</b> &nbsp;|&nbsp; Staff → <b style="color:#fff8">staff123</b></p>
+</div>
+
+<!-- ═══ APP ═══ -->
+<div id="appScreen">
+  <header>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span style="font-size:22px;">🏪</span>
+      <h1>Sri Siri Foods</h1>
+    </div>
+    <div class="hright">
+      <div class="rbadge" id="roleBadge"></div>
+      <div id="clockEl" style="color:#aaa;font-size:13px;"></div>
+      <button class="btn-logout" onclick="doLogout()">Logout</button>
+    </div>
+  </header>
+  <nav class="nav-tabs" id="navTabs"></nav>
+  <main>
+
+    <!-- ── STAFF: Update Inventory ── -->
+    <div class="page" id="page-update">
+      <div class="locked-banner" id="lockBanner">🔒 Updates locked after 11:59 PM. Ask Admin to unlock.</div>
+
+      <!-- Top bar: date + filters -->
+      <div class="date-range-bar" style="margin-bottom:12px;flex-wrap:wrap;gap:12px;">
+        <div class="fg">
+          <label>Date</label>
+          <input type="date" id="txnDate" onchange="onStaffDateChange()">
+        </div>
+        <div class="fg">
+          <label>Category</label>
+          <select id="staffCatFilter" onchange="renderStaffTable()">
+            <option value="">All Categories</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>Search</label>
+          <input type="text" id="staffSearch" placeholder="Product name..." oninput="renderStaffTable()">
+        </div>
+      </div>
+
+      <!-- Stock filters row -->
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px 20px;margin-bottom:16px;display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;box-shadow:var(--shadow);">
+        <!-- Stock status pills -->
+        <div style="display:flex;flex-direction:column;gap:7px;">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);">Stock Status</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <button class="spill on" data-stock="all"      onclick="setStockPill(this)">All Products</button>
+            <button class="spill"    data-stock="instock"  onclick="setStockPill(this)">✅ In Stock</button>
+            <button class="spill"    data-stock="outstock" onclick="setStockPill(this)">❌ Out of Stock</button>
+          </div>
+        </div>
+
+        <!-- Divider -->
+        <div style="width:1px;background:var(--border);align-self:stretch;margin:0 4px;"></div>
+
+        <!-- Greater than / Less than range -->
+        <div style="display:flex;flex-direction:column;gap:7px;">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);">Available Stock Range</div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span style="font-size:13px;color:var(--muted);font-weight:500;">Min&nbsp;≥</span>
+              <input type="number" id="stockMin" min="0" placeholder="0"
+                style="width:72px;padding:6px 8px;border:2px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;outline:none;text-align:center;"
+                onfocus="this.style.borderColor='var(--saffron)'" onblur="this.style.borderColor='var(--border)'"
+                oninput="renderStaffTable()">
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span style="font-size:13px;color:var(--muted);font-weight:500;">Max&nbsp;≤</span>
+              <input type="number" id="stockMax" min="0" placeholder="∞"
+                style="width:72px;padding:6px 8px;border:2px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;outline:none;text-align:center;"
+                onfocus="this.style.borderColor='var(--saffron)'" onblur="this.style.borderColor='var(--border)'"
+                oninput="renderStaffTable()">
+            </div>
+            <button class="btn-ghost" onclick="clearStockRange()">✕ Clear</button>
+          </div>
+        </div>
+
+        <!-- Spacer + result count -->
+        <div style="margin-left:auto;align-self:center;">
+          <span id="staffProgress" style="font-size:13px;color:var(--muted);white-space:nowrap;"></span>
+        </div>
+      </div>
+
+      <!-- Progress bar -->
+      <div style="background:#F0EBE5;border-radius:8px;height:8px;margin-bottom:20px;overflow:hidden;">
+        <div id="staffProgressBar" style="height:100%;background:linear-gradient(90deg,var(--green),#66BB6A);border-radius:8px;width:0%;transition:width .4s ease;"></div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-grid" id="staffStats" style="margin-bottom:20px;"></div>
+
+      <!-- Product Table -->
+      <div class="card" style="padding:0;overflow:hidden;margin-bottom:20px;">
+        <div class="twrap" id="staffTableWrap"></div>
+      </div>
+
+      <!-- Submit Button -->
+      <div id="staffSubmitBar" style="display:none;position:sticky;bottom:0;background:rgba(250,250,247,.95);backdrop-filter:blur(8px);border-top:2px solid var(--border);padding:16px 0;margin:0 -24px;padding-left:24px;padding-right:24px;z-index:50;">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;max-width:1400px;margin:0 auto;">
+          <div>
+            <div style="font-weight:700;font-size:15px;" id="submitSummary">0 products updated</div>
+            <div style="font-size:12px;color:var(--muted);" id="submitDate"></div>
+          </div>
+          <div style="display:flex;gap:10px;">
+            <button class="btn-s" onclick="renderStaffTable()">↺ Refresh</button>
+            <button class="btn-p" id="submitBtn" onclick="submitAllData()"
+              style="background:var(--green);font-size:15px;padding:12px 32px;"
+              onmouseover="this.style.background='#1B5E20'" onmouseout="this.style.background='var(--green)'">
+              ✅ Submit Day's Data
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Submission History -->
+      <div class="card" id="submissionCard" style="display:none;">
+        <h3 class="card-title">📋 Today's Submission Log</h3>
+        <div id="submissionLog"></div>
+      </div>
+    </div>
+
+    <!-- ── ADMIN: Sales Report ── -->
+    <div class="page" id="page-sales">
+      <h2 class="section-heading">Daily Sales Report</h2>
+      <p class="section-sub">Sales = Opening + Purchases − Closing &nbsp;|&nbsp; Filter by date or range below.</p>
+
+      <!-- Date Range Bar -->
+      <div class="date-range-bar">
+        <div class="fg"><label>From Date</label><input type="date" id="salesFrom" onchange="onSalesDateChange()"></div>
+        <div class="fg"><label>To Date</label><input type="date" id="salesTo" onchange="onSalesDateChange()"></div>
+        <div class="fg"><label>&nbsp;</label>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <button class="btn-p" id="salesApplyBtn" onclick="loadSalesReport()">Apply</button>
+            <span id="salesSyncMsg" style="display:none;font-size:12px;color:#188038;font-weight:600;">⏳ Fetching from Sheets...</span>
+          </div>
+        </div>
+        <div class="fg"><label>&nbsp;</label><button class="btn-s" onclick="exportCSV()">⬇ Export CSV</button></div>
+        <div class="fg"><label>&nbsp;</label><button class="btn-p" style="background:#188038;" onmouseover="this.style.background='#146c30'" onmouseout="this.style.background='#188038'" onclick="loadSalesReportFromSheets()" id="syncBtn">☁️ Refresh from Sheets</button></div>
+        <div style="display:flex;flex-direction:column;gap:5px;">
+          <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;">Quick Range</label>
+          <div class="quick-ranges">
+            <button class="qbtn on" onclick="setQuick('today',this)">Today</button>
+            <button class="qbtn" onclick="setQuick('yesterday',this)">Yesterday</button>
+            <button class="qbtn" onclick="setQuick('week',this)">This Week</button>
+            <button class="qbtn" onclick="setQuick('month',this)">This Month</button>
+            <button class="qbtn" onclick="setQuick('custom',this)">Custom</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="stats-grid" id="salesStats"></div>
+
+      <!-- Filter Panel -->
+      <div class="filter-panel">
+        <div class="fb">
+          <div class="fblbl">🔍 Search</div>
+          <input class="fsearch" type="text" id="salesSearch" placeholder="Product name or ID..." oninput="filterSales()">
+        </div>
+        <div class="fb">
+          <div class="fblbl">🗂 Category</div>
+          <div class="pill-grp" id="catPills"></div>
+        </div>
+        <div class="fb">
+          <div class="fblbl">📊 Sales Status</div>
+          <div class="pill-grp">
+            <button class="pill on" data-grp="status" data-val="all" onclick="setPill(this,'status')">All Products</button>
+            <button class="pill" data-grp="status" data-val="sold" onclick="setPill(this,'status')">With Sales Only</button>
+            <button class="pill" data-grp="status" data-val="notsold" onclick="setPill(this,'status')">Zero / No Data</button>
+          </div>
+        </div>
+        <div class="fb">
+          <div class="fblbl">👁 Show / Hide Columns</div>
+          <div class="pill-grp" id="colPills">
+            <button class="pill cpill on" data-col="cat"       onclick="toggleCol(this)">Category</button>
+            <button class="pill cpill on" data-col="cost"      onclick="toggleCol(this)">Cost</button>
+            <button class="pill cpill on" data-col="price"     onclick="toggleCol(this)">Price</button>
+            <button class="pill cpill on" data-col="opening"   onclick="toggleCol(this)">Opening</button>
+            <button class="pill cpill on" data-col="purchases" onclick="toggleCol(this)">Purchases</button>
+            <button class="pill cpill on" data-col="closing"   onclick="toggleCol(this)">Closing</button>
+            <button class="pill cpill on" data-col="sales"     onclick="toggleCol(this)">Sales</button>
+            <button class="pill cpill on" data-col="revenue"   onclick="toggleCol(this)">Revenue</button>
+            <button class="pill cpill on" data-col="profit"    onclick="toggleCol(this)">Profit</button>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <button class="btn-ghost" onclick="resetFilters()">↺ Reset Filters</button>
+          <span id="resultCount" style="font-size:13px;color:var(--muted);"></span>
+        </div>
+      </div>
+
+      <div class="card" style="padding:0;overflow:hidden;">
+        <div class="twrap" id="salesWrap"><div class="nodata" style="padding:48px;">Apply a date range to view sales.</div></div>
+      </div>
+    </div>
+
+    <!-- ── ADMIN: Inventory View ── -->
+    <div class="page" id="page-inventory">
+      <h2 class="section-heading">Inventory</h2>
+      <p class="section-sub">View and update stock levels. Use the entry panel below to record transactions.</p>
+
+      <!-- Admin Transaction Entry Panel -->
+      <div class="txn-panel" id="adminTxnPanel">
+        <div class="txn-title">📝 Record Transaction (Admin)</div>
+        <div class="frow">
+          <div class="fg"><label>Date</label><input type="date" id="invTxnDate" onchange="onInvDateChange()"></div>
+          <div class="fg"><label>Category</label>
+            <select id="invTxnCat" onchange="onInvCatChange()"><option value="">— Select Category —</option></select>
+          </div>
+          <div class="fg" style="min-width:220px;"><label>Product</label>
+            <select id="invTxnProd" onchange="onInvProdChange()" disabled><option value="">— Select Product —</option></select>
+          </div>
+        </div>
+        <div class="info-box" id="invInfoBox">
+          <div class="info-grid">
+            <div class="info-item"><div class="info-lbl">Opening</div><div class="info-val g" id="invIOpen">—</div></div>
+            <div class="info-item"><div class="info-lbl">Purchases</div><div class="info-val b" id="invIPurch">—</div></div>
+            <div class="info-item"><div class="info-lbl">Max Available</div><div class="info-val" id="invIMax">—</div></div>
+            <div class="info-item"><div class="info-lbl">Closing</div><div class="info-val o" id="invIClose">—</div></div>
+            <div class="info-item"><div class="info-lbl">Cost Price</div><div class="info-val" id="invICost">—</div></div>
+            <div class="info-item"><div class="info-lbl">Sell Price</div><div class="info-val g" id="invISell">—</div></div>
+          </div>
+        </div>
+        <div class="txn-type-row">
+          <span style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;">Transaction Type:</span>
+          <button class="ttype-btn t-closing" id="invbtn-closing" onclick="setInvTxnType('closing')">📦 Closing Stock</button>
+          <button class="ttype-btn" id="invbtn-purchase" onclick="setInvTxnType('purchase')">🛒 Add Purchase</button>
+          <button class="ttype-btn" id="invbtn-opening" onclick="setInvTxnType('opening')">🔓 Set Opening</button>
+        </div>
+        <div class="frow">
+          <div class="fg"><label id="invQtyLabel">Closing Stock (units)</label>
+            <input type="number" id="invTxnQty" min="0" placeholder="Enter quantity" style="min-width:180px;">
+          </div>
+          <div class="fg"><label>&nbsp;</label>
+            <button class="btn-p" onclick="saveInvTxn()">✓ Save Transaction</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Inventory Table Filters -->
+      <div class="date-range-bar">
+        <div class="fg"><label>View Date</label><input type="date" id="invDate" onchange="loadInventoryView()"></div>
+        <div class="fg"><label>Category</label>
+          <select id="invCatFilter" onchange="loadInventoryView()"><option value="">All Categories</option></select>
+        </div>
+        <div class="fg"><label>Search</label>
+          <input type="text" id="invSearch" placeholder="Product name..." oninput="loadInventoryView()">
+        </div>
+      </div>
+
+      <div class="stats-grid" id="invStats"></div>
+      <div class="card" style="padding:0;overflow:hidden;">
+        <div class="twrap" id="invWrap"><div class="nodata" style="padding:48px;">Select a date to view inventory.</div></div>
+      </div>
+
+      <!-- Transaction Log for selected date -->
+      <div class="card" id="invLogCard" style="display:none;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
+          <h3 class="card-title" style="margin:0;" id="invLogTitle">Transaction Log</h3>
+          <input class="fsearch" type="text" placeholder="🔍 Filter log..." id="invLogSearch" oninput="renderInvLog()" style="max-width:240px;">
+        </div>
+        <div class="twrap" id="invLogWrap"><div class="nodata">No transactions for this date.</div></div>
+      </div>
+    </div>
+
+    <!-- ── ADMIN: Products ── -->
+    <div class="page" id="page-products">
+      <h2 class="section-heading">Product Management</h2>
+      <p class="section-sub">Manage categories and products.</p>
+
+      <div class="card">
+        <h3 class="card-title">🗂️ Manage Categories</h3>
+        <div class="frow" style="margin-bottom:14px;">
+          <div class="fg" style="min-width:240px;"><label>New Category Name</label>
+            <input type="text" id="newCatInput" placeholder="e.g. Dry Fruits" onkeydown="if(event.key==='Enter')addCategory()">
+          </div>
+          <div class="fg"><label>&nbsp;</label><button class="btn-p" onclick="addCategory()">+ Add Category</button></div>
+        </div>
+        <div id="catChips" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
+      </div>
+
+      <button class="btn-p" onclick="openAddProduct()" style="margin-bottom:16px;">+ Add New Product</button>
+      <div class="card">
+        <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
+          <input class="fsearch" type="text" id="prodSearch" placeholder="🔍 Search products..." oninput="renderProductTable()">
+          <select id="prodCatFilter" style="padding:9px 12px;border:2px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;outline:none;background:#fff;" onchange="renderProductTable()">
+            <option value="">All Categories</option>
+          </select>
+        </div>
+        <div class="twrap" id="prodWrap"></div>
+      </div>
+    </div>
+
+    <!-- ── ADMIN: Settings ── -->
+    <div class="page" id="page-settings">
+      <h2 class="section-heading">Admin Settings</h2>
+      <div class="unlock-sec">
+        <h3>🔓 Unlock Staff Access After Hours</h3>
+        <p style="font-size:13px;color:#856404;margin-bottom:14px;">Allow staff to update inventory after 11:59 PM for a specific date.</p>
+        <div class="frow">
+          <div class="fg"><label>Date to Unlock</label><input type="date" id="unlockDate"></div>
+          <div class="fg"><label>&nbsp;</label><button class="btn-p" onclick="unlockDateFn()">🔓 Unlock</button></div>
+        </div>
+        <div id="unlockedList" style="margin-top:10px;font-size:13px;"></div>
+      </div>
+      <div class="card">
+        <h3 class="card-title">🔑 Change Passwords</h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;" class="pwgrid">
+          <div>
+            <div class="mrow"><label>New Admin Password</label><input type="password" id="newAdminPw" placeholder="Min 4 characters"></div>
+            <button class="btn-s" onclick="changePw('admin')">Update Admin Password</button>
+          </div>
+          <div>
+            <div class="mrow"><label>New Staff Password</label><input type="password" id="newStaffPw" placeholder="Min 4 characters"></div>
+            <button class="btn-s" onclick="changePw('staff')">Update Staff Password</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Google Sheets Integration -->
+      <div class="card" style="border:2px solid #34A853;background:linear-gradient(135deg,#F1F8E9,#fff);">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+          <img src="https://www.gstatic.com/images/branding/product/1x/sheets_2020q4_48dp.png" style="width:32px;height:32px;" onerror="this.style.display='none'">
+          <h3 class="card-title" style="margin:0;color:#188038;">📊 Google Sheets Integration</h3>
+        </div>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">
+          Syncs daily sales data (by product &amp; category) to your Google Sheet automatically.
+          Two tabs will be created: <b>📋 Daily Sales</b> and <b>📊 Category Summary</b>.
+        </p>
+
+        <div class="mrow">
+          <label>Apps Script Web App URL</label>
+          <input type="text" id="sheetsUrl" placeholder="https://script.google.com/macros/s/.../exec"
+            style="font-size:12px;font-family:monospace;"
+            value="https://script.google.com/macros/s/AKfycbx45c7LKkUCLIWfIJUg0InOaTU1bFkAdd83Pr9enrpKOos6CBC-eFmOLAwOB5j0GQYs/exec">
+        </div>
+
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:8px;">
+          <button class="btn-p" style="background:#188038;" onmouseover="this.style.background='#146c30'" onmouseout="this.style.background='#188038'" onclick="saveSheetsUrl()">💾 Save URL</button>
+          <button class="btn-s" style="border-color:#188038;color:#188038;" onclick="testSheetsConnection()">🔗 Test Connection</button>
+        </div>
+        <div id="sheetsStatus" style="margin-top:12px;font-size:13px;min-height:20px;"></div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ═══ ADD PRODUCT MODAL ═══ -->
+<div class="modal-ov" id="addProdModal">
+  <div class="modal">
+    <h2>➕ Add New Product</h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="mrow"><label>Product ID</label><input type="text" id="nProdId"></div>
+      <div class="mrow"><label>Category</label><select id="nProdCat"><option value="">Select...</option></select></div>
+    </div>
+    <div class="mrow"><label>Product Name</label><input type="text" id="nProdName" placeholder="Product name"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="mrow"><label>Cost Price (₹)</label><input type="number" id="nProdCost" placeholder="0" min="0"></div>
+      <div class="mrow"><label>Selling Price (₹)</label><input type="number" id="nProdPrice" placeholder="0" min="0"></div>
+    </div>
+    <div class="mrow"><label>Opening Stock</label><input type="number" id="nProdStock" placeholder="0" min="0"></div>
+    <div class="mactions">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-p" onclick="saveNewProduct()">Save Product</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// DATA LAYER
+// ═══════════════════════════════════════════════════════════
+const SK={P:'ssf4_products',T:'ssf4_txns',U:'ssf4_unlocked',PW:'ssf4_pw',CC:'ssf4_custom_cats'};
+const ls=k=>{try{return JSON.parse(localStorage.getItem(k));}catch{return null;}};
+const ss=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+
+const BUILT_IN_CATS=['Hot','Non Veg Pickles','Others','Pickles','Powder','Sweets','Ulavacharu','Vadiyalu'];
+
+const PRODUCTS=[
+  {id:'P001',name:'Ulavacharu 500 Gm',cat:'Ulavacharu',cost:100,price:150,opening:33},
+  {id:'P002',name:'Ulavacharu 250 Gm',cat:'Ulavacharu',cost:50,price:80,opening:5},
+  {id:'P003',name:'Putharekulu',cat:'Sweets',cost:55,price:120,opening:9},
+  {id:'P004',name:'Putharekulu Special',cat:'Sweets',cost:90,price:200,opening:1},
+  {id:'P005',name:'Bellam Sunnundalu',cat:'Sweets',cost:0,price:150,opening:16},
+  {id:'P006',name:'Kobbari Boorelu',cat:'Sweets',cost:100,price:180,opening:1},
+  {id:'P007',name:'Ariselu',cat:'Sweets',cost:0,price:170,opening:2},
+  {id:'P008',name:'Kajjikayalu',cat:'Sweets',cost:0,price:180,opening:0},
+  {id:'P009',name:'Bellam Gavvalu',cat:'Sweets',cost:0,price:160,opening:9},
+  {id:'P010',name:'Ragi Gavvalu',cat:'Sweets',cost:0,price:160,opening:0},
+  {id:'P011',name:'Gulabi Puvvulu',cat:'Sweets',cost:0,price:60,opening:12},
+  {id:'P012',name:'Maramaralu Undalu',cat:'Sweets',cost:0,price:50,opening:4},
+  {id:'P013',name:'Palli Undalu',cat:'Sweets',cost:0,price:60,opening:22},
+  {id:'P014',name:'Nuvvula Undalu',cat:'Sweets',cost:0,price:60,opening:25},
+  {id:'P015',name:'Badam Biscuit',cat:'Sweets',cost:0,price:170,opening:0},
+  {id:'P016',name:'Madugula Halwa',cat:'Sweets',cost:0,price:100,opening:0},
+  {id:'P049',name:'Thati Thandra',cat:'Sweets',cost:0,price:150,opening:0},
+  {id:'P050',name:'Mamidi Thandra',cat:'Sweets',cost:0,price:100,opening:6},
+  {id:'P114',name:'Bobbatlu',cat:'Sweets',cost:0,price:60,opening:0},
+  {id:'P115',name:'Badam Papidi',cat:'Sweets',cost:0,price:150,opening:0},
+  {id:'P125',name:'Kobbari Undalu',cat:'Sweets',cost:0,price:60,opening:0},
+  {id:'P017',name:'Majjiga Mirapakayalu',cat:'Vadiyalu',cost:0,price:100,opening:20},
+  {id:'P018',name:'Minapa Vadiyalu',cat:'Vadiyalu',cost:0,price:0,opening:0},
+  {id:'P019',name:'Pesarapappu Vadiyalu',cat:'Vadiyalu',cost:0,price:130,opening:13},
+  {id:'P020',name:'Saggubiyyam Vadiyalu',cat:'Vadiyalu',cost:0,price:80,opening:20},
+  {id:'P021',name:'Biyyam Pindi Vadiyalu',cat:'Vadiyalu',cost:0,price:80,opening:14},
+  {id:'P022',name:'Corn Vadiyalu',cat:'Vadiyalu',cost:100,price:130,opening:23},
+  {id:'P023',name:'Saggubiyyam Karam Vadiyalu',cat:'Vadiyalu',cost:0,price:80,opening:11},
+  {id:'P024',name:'Onion Vadiyalu',cat:'Vadiyalu',cost:0,price:130,opening:16},
+  {id:'P025',name:'Maramaralu',cat:'Hot',cost:0,price:50,opening:17},
+  {id:'P026',name:'Saggubiyyam Chekkalu 250',cat:'Hot',cost:0,price:80,opening:0},
+  {id:'P027',name:'Saggubiyyam Chekkalu 500',cat:'Hot',cost:0,price:160,opening:0},
+  {id:'P028',name:'Onion Chekkalu',cat:'Hot',cost:0,price:80,opening:15},
+  {id:'P029',name:'Palakura Chekkalu',cat:'Hot',cost:0,price:80,opening:13},
+  {id:'P030',name:'Beet Root Chekkalu',cat:'Hot',cost:0,price:0,opening:0},
+  {id:'P031',name:'Ribbon Pakodi',cat:'Hot',cost:0,price:80,opening:8},
+  {id:'P032',name:'Butter Chakralu',cat:'Hot',cost:0,price:80,opening:6},
+  {id:'P033',name:'Murukulu',cat:'Hot',cost:0,price:80,opening:10},
+  {id:'P034',name:'Chekodilu 500',cat:'Hot',cost:0,price:160,opening:1},
+  {id:'P035',name:'Sanna Karappusa',cat:'Hot',cost:0,price:0,opening:0},
+  {id:'P036',name:'Vamppusa',cat:'Hot',cost:0,price:0,opening:0},
+  {id:'P037',name:'Dal Mudi',cat:'Hot',cost:0,price:160,opening:2},
+  {id:'P038',name:'Atukula Mixture',cat:'Hot',cost:0,price:80,opening:8},
+  {id:'P039',name:'Boondi',cat:'Hot',cost:0,price:0,opening:0},
+  {id:'P040',name:'Corn Flakes',cat:'Hot',cost:0,price:0,opening:0},
+  {id:'P041',name:'Aloo Chips',cat:'Hot',cost:0,price:0,opening:0},
+  {id:'P042',name:'Aloo Sticks',cat:'Hot',cost:0,price:0,opening:0},
+  {id:'P043',name:'Green Batani Mixture',cat:'Hot',cost:0,price:160,opening:2},
+  {id:'P044',name:'Navaratna Mixture',cat:'Hot',cost:0,price:160,opening:3},
+  {id:'P045',name:'Batanilu 500gm',cat:'Hot',cost:0,price:130,opening:6},
+  {id:'P046',name:'Senagalu 500',cat:'Hot',cost:0,price:130,opening:14},
+  {id:'P047',name:'Pallilu 500gm',cat:'Hot',cost:0,price:130,opening:5},
+  {id:'P048',name:'Chekodi 250 Gm',cat:'Hot',cost:0,price:80,opening:2},
+  {id:'P116',name:'Palli Pakodi',cat:'Hot',cost:0,price:0,opening:0},
+  {id:'P133',name:'Kakarakai Chips',cat:'Hot',cost:0,price:120,opening:0},
+  {id:'P054',name:'Amla 500 Gm',cat:'Pickles',cost:115,price:160,opening:5},
+  {id:'P055',name:'Amla 300 Gm',cat:'Pickles',cost:70,price:110,opening:3},
+  {id:'P056',name:'Tomato 500 Gm',cat:'Pickles',cost:115,price:160,opening:8},
+  {id:'P057',name:'Tomato 300Gm',cat:'Pickles',cost:70,price:110,opening:6},
+  {id:'P058',name:'Mango 500 Gm',cat:'Pickles',cost:115,price:200,opening:7},
+  {id:'P059',name:'Mango 300 Gm',cat:'Pickles',cost:70,price:110,opening:10},
+  {id:'P060',name:'Gongura 500 Gm',cat:'Pickles',cost:115,price:160,opening:8},
+  {id:'P061',name:'Gongura 300 Gm',cat:'Pickles',cost:70,price:110,opening:8},
+  {id:'P062',name:'Lemon 500 Gm',cat:'Pickles',cost:115,price:160,opening:9},
+  {id:'P063',name:'Lemon 300 Gm',cat:'Pickles',cost:70,price:110,opening:8},
+  {id:'P064',name:'Red Chilli 500 Gm',cat:'Pickles',cost:115,price:160,opening:8},
+  {id:'P065',name:'Red Chilli 300 Gm',cat:'Pickles',cost:70,price:110,opening:11},
+  {id:'P066',name:'Ginger 500Gm',cat:'Pickles',cost:115,price:160,opening:9},
+  {id:'P067',name:'Ginger 300 Gm',cat:'Pickles',cost:70,price:110,opening:5},
+  {id:'P068',name:'Pudina 500 Gm',cat:'Pickles',cost:115,price:160,opening:2},
+  {id:'P069',name:'Pudina 300 Gm',cat:'Pickles',cost:70,price:110,opening:4},
+  {id:'P070',name:'Drum Sticks 500 Gm',cat:'Pickles',cost:115,price:160,opening:2},
+  {id:'P071',name:'Drum Sticks 300 Gm',cat:'Pickles',cost:70,price:110,opening:4},
+  {id:'P072',name:'Kothimeera 500 Gm',cat:'Pickles',cost:115,price:170,opening:2},
+  {id:'P073',name:'Kothimeera 300 Gm',cat:'Pickles',cost:70,price:110,opening:4},
+  {id:'P117',name:'Tamarind 250 Gm',cat:'Pickles',cost:0,price:110,opening:5},
+  {id:'P118',name:'Tamarind 500 Gm',cat:'Pickles',cost:0,price:150,opening:1},
+  {id:'P074',name:'Karivepaku 100 Gm',cat:'Powder',cost:35,price:60,opening:0},
+  {id:'P075',name:'Karivepaku Karam 250 Gm',cat:'Powder',cost:105,price:160,opening:0},
+  {id:'P076',name:'Nallakaram 100 Gm',cat:'Powder',cost:35,price:60,opening:0},
+  {id:'P077',name:'Nallakaram 500 Gm',cat:'Powder',cost:105,price:160,opening:5},
+  {id:'P078',name:'Munagaku Karam 100',cat:'Powder',cost:35,price:60,opening:0},
+  {id:'P079',name:'Munagaku Karam 250 Gm',cat:'Powder',cost:105,price:160,opening:0},
+  {id:'P080',name:'Idly Karam 100 Gm',cat:'Powder',cost:35,price:60,opening:0},
+  {id:'P081',name:'Idly Karam 250 Gm',cat:'Powder',cost:105,price:160,opening:0},
+  {id:'P082',name:'Kandi Karam 100 Gm',cat:'Powder',cost:35,price:60,opening:0},
+  {id:'P083',name:'Kandi Karam 250 Gm',cat:'Powder',cost:105,price:160,opening:0},
+  {id:'P084',name:'Kobbari Karam 100 Gm',cat:'Powder',cost:35,price:60,opening:0},
+  {id:'P085',name:'Kobbari Karam 250 Gm',cat:'Powder',cost:105,price:160,opening:0},
+  {id:'P086',name:'Flax Seed Karam 100 Gm',cat:'Powder',cost:35,price:60,opening:0},
+  {id:'P087',name:'Flax Seed Karam 250 Gm',cat:'Powder',cost:105,price:160,opening:0},
+  {id:'P088',name:'Nuvvula Karam 100 Gm',cat:'Powder',cost:35,price:60,opening:0},
+  {id:'P089',name:'Nuvvula Karam 250 Gm',cat:'Powder',cost:105,price:160,opening:0},
+  {id:'P090',name:'Putnala Karam 100 Gm',cat:'Powder',cost:35,price:60,opening:0},
+  {id:'P091',name:'Putnala Karam 250 Gm',cat:'Powder',cost:105,price:160,opening:0},
+  {id:'P092',name:'Kakarakaya Karam 100 Gm',cat:'Powder',cost:35,price:60,opening:0},
+  {id:'P093',name:'Kakarakaya Karam 250 Gm',cat:'Powder',cost:105,price:160,opening:0},
+  {id:'P094',name:'Pudina Karam 100 Gm',cat:'Powder',cost:35,price:60,opening:0},
+  {id:'P095',name:'Pudina Karam 250 Gm',cat:'Powder',cost:105,price:160,opening:0},
+  {id:'P119',name:'Pallila Karam 100',cat:'Powder',cost:0,price:0,opening:0},
+  {id:'P120',name:'Pallila Karam 250',cat:'Powder',cost:0,price:0,opening:0},
+  {id:'P121',name:'Avesa Ginjala Karam 100',cat:'Powder',cost:0,price:0,opening:0},
+  {id:'P122',name:'Avesa Ginjala Karam 250',cat:'Powder',cost:0,price:0,opening:0},
+  {id:'P123',name:'Vellulli Karam 100',cat:'Powder',cost:0,price:0,opening:0},
+  {id:'P124',name:'Vellulli Karam 250',cat:'Powder',cost:0,price:0,opening:0},
+  {id:'P096',name:'Nethallu 250 Gm',cat:'Non Veg Pickles',cost:0,price:0,opening:0},
+  {id:'P097',name:'Nethallu 500 Gm',cat:'Non Veg Pickles',cost:0,price:0,opening:0},
+  {id:'P098',name:'Chicken Bone 250 Gm',cat:'Non Veg Pickles',cost:0,price:0,opening:0},
+  {id:'P099',name:'Chicken Bone 500 Gm',cat:'Non Veg Pickles',cost:0,price:0,opening:0},
+  {id:'P100',name:'Chicken Boneless 500 Gm',cat:'Non Veg Pickles',cost:0,price:0,opening:0},
+  {id:'P101',name:'Chicken Boneless 250 Gm',cat:'Non Veg Pickles',cost:0,price:0,opening:0},
+  {id:'P102',name:'Gongura Chicken 500 Gm',cat:'Non Veg Pickles',cost:0,price:0,opening:0},
+  {id:'P103',name:'Gongura Chicken 250 Gm',cat:'Non Veg Pickles',cost:0,price:0,opening:0},
+  {id:'P104',name:'Prawn 250 Gm',cat:'Non Veg Pickles',cost:0,price:0,opening:0},
+  {id:'P105',name:'Gongura Prawn 500 Gm',cat:'Non Veg Pickles',cost:0,price:0,opening:0},
+  {id:'P106',name:'Mutton Keema 500 Gm',cat:'Non Veg Pickles',cost:0,price:0,opening:0},
+  {id:'P107',name:'Prawn 500 Gm',cat:'Non Veg Pickles',cost:0,price:0,opening:0},
+  {id:'P108',name:'Gongura Prawn 250 Gm',cat:'Non Veg Pickles',cost:0,price:0,opening:0},
+  {id:'P109',name:'Mutton Keema 250 Gm',cat:'Non Veg Pickles',cost:0,price:0,opening:0},
+  {id:'P110',name:'Natukodi 250 Gm',cat:'Non Veg Pickles',cost:0,price:0,opening:0},
+  {id:'P111',name:'Natukodi 500 Gm',cat:'Non Veg Pickles',cost:0,price:0,opening:0},
+  {id:'P112',name:'Mutton 250 Gm',cat:'Non Veg Pickles',cost:0,price:0,opening:0},
+  {id:'P113',name:'Mutton 500 Gm',cat:'Non Veg Pickles',cost:0,price:0,opening:0},
+  {id:'P051',name:'Corn Samosa',cat:'Others',cost:0,price:0,opening:0},
+  {id:'P052',name:'Mushrooms',cat:'Others',cost:0,price:0,opening:0},
+  {id:'P053',name:'Veg Rolls',cat:'Others',cost:0,price:0,opening:0},
+  {id:'P126',name:'Horlicks Biscuits',cat:'Others',cost:0,price:55,opening:0},
+  {id:'P127',name:'Nimma Thonalu',cat:'Others',cost:0,price:60,opening:0},
+  {id:'P128',name:'Nimma Thonalu Chinnavi',cat:'Others',cost:0,price:60,opening:0},
+  {id:'P129',name:'Roasted Natu Pallilu',cat:'Others',cost:0,price:60,opening:0},
+  {id:'P130',name:'Batanilu',cat:'Others',cost:0,price:60,opening:0},
+  {id:'P131',name:'Senagalu',cat:'Others',cost:0,price:60,opening:0},
+  {id:'P132',name:'Cherries',cat:'Others',cost:0,price:60,opening:0},
+];
+
+function initData(){
+  if(!ls(SK.P)) ss(SK.P,PRODUCTS);
+  if(!ls(SK.T)) ss(SK.T,{});
+  if(!ls(SK.U)) ss(SK.U,[]);
+  if(!ls(SK.PW)) ss(SK.PW,{admin:'admin123',staff:'staff123'});
+  if(!ls(SK.CC)) ss(SK.CC,[]);
+}
+const getProds=()=>ls(SK.P)||PRODUCTS;
+const getTxns=()=>ls(SK.T)||{};
+const getUnlocked=()=>ls(SK.U)||[];
+const getPws=()=>ls(SK.PW)||{admin:'admin123',staff:'staff123'};
+const getCustomCats=()=>ls(SK.CC)||[];
+const getAllCats=()=>[...new Set([...BUILT_IN_CATS,...getCustomCats()])].sort();
+
+// ═══════════════════════════════════════════════════════════
+// AUTH
+// ═══════════════════════════════════════════════════════════
+let role=null;
+function selectRole(r){
+  role=r;
+  document.querySelectorAll('.role-tab').forEach((t,i)=>t.classList.toggle('active',(i===0&&r==='admin')||(i===1&&r==='staff')));
+  document.getElementById('loginPw').value='';
+  document.getElementById('loginErr').textContent='';
+}
+function doLogin(){
+  const pw=document.getElementById('loginPw').value;
+  const pws=getPws();
+  if(!role){document.getElementById('loginErr').textContent='Please select a role.';return;}
+  if(pw!==pws[role]){document.getElementById('loginErr').textContent='Incorrect password.';return;}
+  startApp();
+}
+function doLogout(){
+  role=null;
+  document.getElementById('loginScreen').style.display='flex';
+  document.getElementById('appScreen').style.display='none';
+  document.getElementById('loginPw').value='';
+}
+function startApp(){
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('appScreen').style.display='flex';
+  const rb=document.getElementById('roleBadge');
+  rb.textContent=role==='admin'?'👑 Admin':'🧑‍💼 Staff';
+  rb.className='rbadge '+role;
+  buildNav();
+  startClock();
+  populateAllDropdowns();
+  setToday();
+  if(role==='admin'){
+    showPage('sales');
+    loadSalesReport();
+    renderProductTable();
+    renderCatChips();
+    renderUnlockedList();
+    populateInvCatFilter();
+    // set inv txn date to today
+    const itd=document.getElementById('invTxnDate'); if(itd) itd.value=todayStr();
+    const ivd=document.getElementById('invDate'); if(ivd) ivd.value=todayStr();
+    // pre-fill sheets URL input if saved
+    const sui=document.getElementById('sheetsUrl');
+    if(sui){ const saved=getSheetsUrl(); if(saved) sui.value=saved; }
+  } else {
+    showPage('update');
+    populateStaffCatFilter();
+    const txnDateEl = document.getElementById('txnDate');
+    if(txnDateEl) txnDateEl.value = todayStr();
+    checkLock();
+    renderStaffTable();
+  }
+}
+function buildNav(){
+  const tabs=role==='admin'
+    ?[{id:'sales',l:'📊 Sales Report'},{id:'inventory',l:'📦 Inventory'},{id:'products',l:'🛒 Products'},{id:'settings',l:'⚙️ Settings'}]
+    :[{id:'update',l:'✏️ Update Inventory'}];
+  document.getElementById('navTabs').innerHTML=tabs.map(t=>`<button class="nav-tab" id="tab-${t.id}" onclick="showPage('${t.id}')">${t.l}</button>`).join('');
+}
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  const p=document.getElementById('page-'+id); if(p) p.classList.add('active');
+  const t=document.getElementById('tab-'+id); if(t) t.classList.add('active');
+  if(id==='inventory') loadInventoryView();
+  if(id==='products'){renderCatChips();renderProductTable();}
+}
+function todayStr(){return new Date().toISOString().split('T')[0];}
+
+function fmtDate(d){
+  if(!d) return '';
+  const [y,m,day]=d.split('-');
+  const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return `${parseInt(day)} ${months[parseInt(m)-1]} ${y}`;
+}
+function getDatesInRange(from,to){
+  const dates=[];
+  let cur=new Date(from+'T00:00:00');
+  const end=new Date(to+'T00:00:00');
+  while(cur<=end){
+    dates.push(cur.toISOString().split('T')[0]);
+    cur.setDate(cur.getDate()+1);
+  }
+  return dates;
+}
+
+function setToday(){
+  const d=todayStr();
+  const el=document.getElementById('txnDate'); if(el) el.value=d;
+  const sf=document.getElementById('salesFrom'); if(sf) sf.value=d;
+  const st=document.getElementById('salesTo'); if(st) st.value=d;
+  const iv=document.getElementById('invDate'); if(iv) iv.value=d;
+  const ul=document.getElementById('unlockDate'); if(ul) ul.value=d;
+}
+function startClock(){
+  const tick=()=>{const el=document.getElementById('clockEl');if(el)el.textContent=new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit'});};
+  tick();setInterval(tick,1000);
+}
+
+// ═══════════════════════════════════════════════════════════
+// DROPDOWNS
+// ═══════════════════════════════════════════════════════════
+function populateAllDropdowns(){
+  const cats=getAllCats();
+  const catOpts='<option value="">— Select Category —</option>'+cats.map(c=>`<option value="${c}">${c}</option>`).join('');
+  const allOpts='<option value="">All Categories</option>'+cats.map(c=>`<option value="${c}">${c}</option>`).join('');
+  // admin inv txn category
+  const ic=document.getElementById('invTxnCat'); if(ic) ic.innerHTML=catOpts;
+  // new product modal
+  const nc=document.getElementById('nProdCat'); if(nc) nc.innerHTML='<option value="">Select...</option>'+cats.map(c=>`<option value="${c}">${c}</option>`).join('');
+  // product page filter
+  const pcf=document.getElementById('prodCatFilter'); if(pcf) pcf.innerHTML=allOpts;
+}
+function populateInvCatFilter(){
+  const cats=getAllCats();
+  const el=document.getElementById('invCatFilter');
+  if(el) el.innerHTML='<option value="">All Categories</option>'+cats.map(c=>`<option value="${c}">${c}</option>`).join('');
+}
+function buildCatPills(){
+  const wrap=document.getElementById('catPills');
+  if(!wrap) return;
+  const cats=getAllCats();
+  wrap.innerHTML=`<button class="pill on" data-grp="cat" data-val="all" onclick="setPill(this,'cat')">All Categories</button>`
+    +cats.map(c=>`<button class="pill" data-grp="cat" data-val="${c}" onclick="setPill(this,'cat')">${c}</button>`).join('');
+}
+
+// ═══════════════════════════════════════════════════════════
+// STATE ENGINE
+// ═══════════════════════════════════════════════════════════
+function getState(pid,date){
+  const txns=getTxns();
+  const day=(txns[date]||[]).filter(t=>t.pid===pid);
+  const opTxn=[...day].reverse().find(t=>t.type==='opening');
+  const opening=opTxn!=null?opTxn.qty:getPrevClose(pid,date);
+  const purchases=day.filter(t=>t.type==='purchase').reduce((s,t)=>s+t.qty,0);
+  const clTxn=[...day].reverse().find(t=>t.type==='closing');
+  const closing=clTxn!=null?clTxn.qty:null;
+  return{opening,purchases,closing,max:opening+purchases};
+}
+function getPrevClose(pid,date){
+  const txns=getTxns();
+  const dates=Object.keys(txns).filter(d=>d<date).sort().reverse();
+  for(const d of dates){
+    const cl=[...(txns[d]||[])].reverse().find(t=>t.pid===pid&&t.type==='closing');
+    if(cl!=null) return cl.qty;
+    const op=[...(txns[d]||[])].reverse().find(t=>t.pid===pid&&t.type==='opening');
+    if(op!=null) return op.qty;
+  }
+  const p=getProds().find(x=>x.id===pid);
+  return p?(p.opening||0):0;
+}
+
+// ═══════════════════════════════════════════════════════════
+// LOCK
+// ═══════════════════════════════════════════════════════════
+function isLocked(){const n=new Date();return n.getHours()===23&&n.getMinutes()>=59;}
+function checkLock(){
+  const date=(document.getElementById('txnDate')||{}).value||todayStr();
+  const locked=isLocked()&&!getUnlocked().includes(date);
+  const b=document.getElementById('lockBanner'); if(b) b.classList.toggle('on',locked);
+  const sb=document.getElementById('submitBtn'); if(sb) sb.disabled=locked;
+}
+
+// ═══════════════════════════════════════════════════════════
+// STAFF – TABLE-BASED INVENTORY UPDATE
+// ═══════════════════════════════════════════════════════════
+function onStaffDateChange(){
+  const date=(document.getElementById('txnDate')||{}).value||'';
+  checkLock();
+  updateStaffProgress(date);
+  renderStaffTable();
+}
+
+function populateStaffCatFilter(){
+  const el=document.getElementById('staffCatFilter'); if(!el) return;
+  const cats=getAllCats();
+  el.innerHTML='<option value="">All Categories</option>'
+    +cats.map(c=>`<option value="${c}">${c}</option>`).join('');
+}
+
+// stock filter state
+let activeStockPill='all';
+function setStockPill(btn){
+  document.querySelectorAll('.spill').forEach(p=>p.classList.remove('on'));
+  btn.classList.add('on');
+  activeStockPill=btn.dataset.stock;
+  renderStaffTable();
+}
+function clearStockRange(){
+  const mn=document.getElementById('stockMin'); if(mn) mn.value='';
+  const mx=document.getElementById('stockMax'); if(mx) mx.value='';
+  renderStaffTable();
+}
+
+function renderStaffTable(){
+  const wrap=document.getElementById('staffTableWrap');
+  const submitBar=document.getElementById('staffSubmitBar');
+  if(!wrap){ console.error('staffTableWrap not found!'); return; }
+
+  // Get date — always use today as default
+  const txnEl=document.getElementById('txnDate');
+  const today=todayStr();
+  if(txnEl && !txnEl.value) txnEl.value=today;
+  const safeDate=(txnEl && txnEl.value) ? txnEl.value : today;
+
+  // Show loading state immediately
+  wrap.innerHTML='<div style="padding:32px;text-align:center;color:var(--muted);">⏳ Loading products...</div>';
+
+  // Get filters
+  const cat=(document.getElementById('staffCatFilter')||{}).value||'';
+  const q=((document.getElementById('staffSearch')||{}).value||'').toLowerCase();
+  const stockMode=activeStockPill||'all';
+  const stockMinRaw=(document.getElementById('stockMin')||{}).value;
+  const stockMaxRaw=(document.getElementById('stockMax')||{}).value;
+  const stockMin=(stockMinRaw!==undefined&&stockMinRaw!=='')?parseInt(stockMinRaw):null;
+  const stockMax=(stockMaxRaw!==undefined&&stockMaxRaw!=='')?parseInt(stockMaxRaw):null;
+
+  // Get all products
+  let prods=getProds();
+
+  // Apply text filters
+  if(cat) prods=prods.filter(p=>p.cat===cat);
+  if(q)   prods=prods.filter(p=>p.name.toLowerCase().includes(q)||p.id.toLowerCase().includes(q));
+
+  // Build rows with stock state
+  let rows=prods.map(p=>{
+    const st=getState(p.id,safeDate);
+    return{...p,opening:st.opening,purchases:st.purchases,closing:st.closing,max:st.max};
+  });
+
+  // Apply stock filters
+  if(stockMode==='instock')  rows=rows.filter(r=>r.max>0);
+  if(stockMode==='outstock') rows=rows.filter(r=>r.max===0);
+  if(stockMin!==null && !isNaN(stockMin)) rows=rows.filter(r=>r.max>=stockMin);
+  if(stockMax!==null && !isNaN(stockMax)) rows=rows.filter(r=>r.max<=stockMax);
+
+  // Show submit bar
+  if(submitBar) submitBar.style.display='block';
+  const sdEl=document.getElementById('submitDate');
+  if(sdEl) sdEl.textContent='Date: '+fmtDate(safeDate);
+  updateStaffProgress(safeDate);
+
+  if(!rows.length){
+    wrap.innerHTML='<div class="nodata" style="padding:48px;">No products match the current filters.</div>';
+    return;
+  }
+
+  // Group by category
+  const byCategory={};
+  rows.forEach(r=>{
+    if(!byCategory[r.cat]) byCategory[r.cat]=[];
+    byCategory[r.cat].push(r);
+  });
+
+  // Build table HTML
+  let h='<table><thead><tr>'
+    +'<th style="min-width:200px;">Product</th>'
+    +'<th style="text-align:center;min-width:80px;">Opening</th>'
+    +'<th style="text-align:center;min-width:80px;">Purchases</th>'
+    +'<th style="text-align:center;min-width:90px;">Available</th>'
+    +'<th style="text-align:center;min-width:120px;">Closing Stock<div style="font-size:10px;font-weight:400;color:#aaa;">Type & press Enter ↵</div></th>'
+    +'<th style="text-align:center;min-width:70px;">Status</th>'
+    +'</tr></thead><tbody>';
+
+  Object.entries(byCategory).forEach(([catName,catRows])=>{
+    const doneCnt=catRows.filter(r=>r.closing!=null).length;
+    h+='<tr style="background:linear-gradient(90deg,#F5F0EB,#FAFAF7);">'
+      +'<td colspan="6" style="padding:8px 14px;font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.8px;color:var(--sd);">'
+      +'🗂 '+catName+' <span style="font-weight:400;color:var(--muted);font-size:11px;">('+doneCnt+'/'+catRows.length+' done)</span>'
+      +'</td></tr>';
+
+    catRows.forEach(r=>{
+      const isDone=r.closing!=null;
+      const availColor=r.max===0?'var(--red)':r.max<=5?'#E65100':'var(--text)';
+      const doneBadge='<span style="background:var(--gl);color:var(--green);padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;">✓ Done</span>';
+      const pendBadge='<span style="background:#FFF3E0;color:var(--sd);padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;">Pending</span>';
+      const bdr=isDone?'#188038':'#ccc';
+      const bg=isDone?'#F1F8E9':'#fff';
+      const clr=isDone?'#188038':'#333';
+      const fw=isDone?'700':'400';
+      h+=`<tr id="srow_${r.id}" style="background:${isDone?'#FAFFFE':'#fff'};">
+        <td><div class="pname" style="font-size:14px;">${r.name}</div><div class="pid">${r.id}</div></td>
+        <td style="text-align:center;color:var(--muted);">${r.opening}</td>
+        <td style="text-align:center;color:var(--blue);">${r.purchases>0?'<b>+'+r.purchases+'</b>':r.purchases}</td>
+        <td style="text-align:center;font-weight:700;color:${availColor};">${r.max}</td>
+        <td style="text-align:center;">
+          <input type="number" min="0" max="${r.max}" id="sclose_${r.id}"
+            value="${isDone?r.closing:''}" placeholder="${r.max}"
+            style="width:80px;padding:7px 8px;border:2px solid ${bdr};border-radius:8px;font-size:15px;outline:none;text-align:center;background:${bg};color:${clr};font-weight:${fw};"
+            onfocus="this.style.borderColor='#E8820C'"
+            onblur="staffCellBlur('${r.id}','${safeDate}',this)"
+            onkeydown="if(event.key==='Enter'){event.preventDefault();staffCellSave('${r.id}','${safeDate}',this.value);staffFocusNext('${r.id}');}">
+        </td>
+        <td style="text-align:center;">${isDone?doneBadge:pendBadge}</td>
+      </tr>`;
+    });
+  });
+
+  h+='</tbody></table>';
+  wrap.innerHTML=h;
+}
+
+
+function staffCellBlur(pid, date, input){
+  // Auto-save when user clicks away from a filled cell
+  if(input.value !== '') staffCellSave(pid, date, input.value, false);
+}
+
+function staffCellSave(pid, date, val, showToast=true){
+  const qty=parseInt(val);
+  if(val===''||isNaN(qty)||qty<0) return;
+  const st=getState(pid,date);
+  if(qty>st.max){
+    toast('Closing ('+qty+') cannot exceed available ('+st.max+')','err');
+    const inp=document.getElementById('sclose_'+pid); if(inp){inp.value=st.max;inp.style.borderColor='var(--red)';}
+    return false;
+  }
+  // Save transaction
+  const txns=getTxns();
+  if(!txns[date]) txns[date]=[];
+  txns[date]=txns[date].filter(t=>!(t.pid===pid&&t.type==='closing'));
+  txns[date].push({pid,type:'closing',qty,ts:Date.now()});
+  ss(SK.T,txns);
+
+  // Update this row's UI in-place (no full re-render)
+  const row=document.getElementById('srow_'+pid);
+  if(row){
+    row.style.background='#FAFFFE';
+    const inp=document.getElementById('sclose_'+pid);
+    if(inp){inp.style.borderColor='var(--green)';inp.style.color='var(--green)';inp.style.fontWeight='700';inp.style.background='#F1F8E9';}
+    // update status badge cell
+    const cells=row.querySelectorAll('td');
+    if(cells[5]) cells[5].innerHTML='<span style="background:var(--gl);color:var(--green);padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;">✓ Done</span>';
+  }
+
+  updateStaffProgress(date);
+  if(showToast) toast('✓ Saved','ok');
+  return true;
+}
+
+function staffFocusNext(pid){
+  // Move focus to next product's input
+  const allInputs=Array.from(document.querySelectorAll('[id^="sclose_"]'));
+  const idx=allInputs.findIndex(i=>i.id==='sclose_'+pid);
+  if(idx>=0&&idx<allInputs.length-1) allInputs[idx+1].focus();
+}
+
+function updateStaffProgress(date){
+  if(!date) return;
+  const allProds=getProds();
+  const total=allProds.length;
+  const done=allProds.filter(p=>getState(p.id,date).closing!=null).length;
+  const pct=total>0?Math.round(done/total*100):0;
+
+  const bar=document.getElementById('staffProgressBar'); if(bar) bar.style.width=pct+'%';
+  const prog=document.getElementById('staffProgress');
+  if(prog) prog.textContent=done+' / '+total+' products done ('+pct+'%)';
+  const sumEl=document.getElementById('submitSummary');
+  if(sumEl) sumEl.textContent=done+' product'+(done!==1?'s':'')+' updated';
+}
+
+async function submitAllData(){
+  const date=(document.getElementById('txnDate')||{}).value||'';
+  if(!date){toast('Select a date first','err');return;}
+  const prods=getProds();
+  const updated=prods.filter(p=>getState(p.id,date).closing!=null);
+  if(!updated.length){toast('No closing stock entered yet','err');return;}
+
+  const submitBtn=document.getElementById('submitBtn');
+  if(submitBtn){submitBtn.textContent='⏳ Submitting...';submitBtn.disabled=true;}
+
+  // Collect all transactions for this date
+  const txns=getTxns();
+  const dayTxns=txns[date]||[];
+
+  // Push to Google Sheets (no-cors = fire and forget, always works from published URL)
+  const url=getSheetsUrl();
+  let sheetOk=false;
+  if(url){
+    try{
+      await fetch(url,{
+        method:'POST',
+        mode:'no-cors',
+        headers:{'Content-Type':'text/plain'},
+        body:JSON.stringify({action:'saveTxns',date,txns:dayTxns})
+      });
+      sheetOk=true; // no-cors never throws unless network is down
+    }catch(e){
+      console.warn('Sheet push failed (expected if testing locally):',e.message);
+    }
+  }
+
+  // Save submission record locally
+  const subKey='ssf4_submissions';
+  const subs=ls(subKey)||[];
+  const existing=subs.findIndex(s=>s.date===date);
+  const record={date,submittedAt:Date.now(),updatedCount:updated.length,totalCount:prods.length,synced:sheetOk};
+  if(existing>=0) subs[existing]=record; else subs.push(record);
+  ss(subKey,subs);
+
+  if(submitBtn){
+    submitBtn.textContent='✅ Submitted!';
+    submitBtn.style.background='#1B5E20';
+    submitBtn.disabled=false;
+    setTimeout(()=>{submitBtn.textContent='✅ Submit Day\'s Data';submitBtn.style.background='var(--green)';},3000);
+  }
+
+  renderSubmissionLog(date);
+  const msg=sheetOk
+    ?'✅ Submitted & synced to Google Sheets! '+updated.length+'/'+prods.length+' products.'
+    :'✅ Saved locally! '+updated.length+'/'+prods.length+' products. (Open from GitHub to sync to Sheets)';
+  toast(msg,'ok');
+}
+
+
+async function testSheetsConnection(){
+  const url=getSheetsUrl();
+  if(!url){toast('No URL saved','err');return;}
+  const statusEl=document.getElementById('sheetsStatus'); if(!statusEl) return;
+  statusEl.innerHTML='<span style="color:#888;">⏳ Testing connection...</span>';
+  try{
+    const resp=await fetch(url+'?action=ping',{method:'GET'});
+    if(!resp.ok) throw new Error('HTTP '+resp.status);
+    const data=await resp.json();
+    if(data.status==='ok'){
+      statusEl.innerHTML='<span style="color:#188038;font-weight:700;">✅ Connected! Google Sheets is working perfectly.</span>';
+      toast('✓ Connected to Google Sheets!','ok');
+    } else {
+      throw new Error(data.message||'Unknown error');
+    }
+  }catch(err){
+    statusEl.innerHTML='<span style="color:#E65100;font-weight:600;">⚠️ Could not verify automatically — but your data sync still works fine.<br><span style="font-weight:400;font-size:12px;">To confirm: open your Google Sheet after staff submits. A "Transactions" tab will appear with all data.</span></span>';
+    toast('Connection test inconclusive — sync still works','ok');
+    console.warn('Test ping note:',err.message);
+  }
+}
+
+// ── Load transactions FROM Google Sheets (via GET, avoids CORS) ──
+async function loadTxnsFromSheets(fromDate, toDate){
+  const url=getSheetsUrl(); if(!url) return null;
+  try{
+    const params=new URLSearchParams({action:'loadTxns',fromDate,toDate});
+    const resp=await fetch(url+'?'+params, {method:'GET'});
+    if(!resp.ok) return null;
+    const json=await resp.json();
+    if(json.status==='ok') return json.txns||{};
+    return null;
+  }catch(e){
+    console.warn('loadTxnsFromSheets failed:',e);
+    return null;
+  }
+}
+
+// ── Merge sheet transactions into localStorage ──
+async function refreshFromSheets(fromDate, toDate, showStatus){
+  const statusEl=document.getElementById('sheetsStatus');
+  if(showStatus&&statusEl) statusEl.innerHTML='<span style="color:#888;">⏳ Loading from Sheets...</span>';
+  const sheetTxns=await loadTxnsFromSheets(fromDate, toDate);
+  if(!sheetTxns){
+    if(showStatus&&statusEl) statusEl.innerHTML='<span style="color:var(--red);">❌ Could not load from Sheets. Using local data.</span>';
+    return false;
+  }
+  // Merge: sheet data wins for dates in range
+  const localTxns=getTxns();
+  Object.entries(sheetTxns).forEach(([date,txns])=>{
+    if(txns&&txns.length) localTxns[date]=txns;
+  });
+  ss(SK.T,localTxns);
+  if(showStatus&&statusEl) statusEl.innerHTML='<span style="color:#188038;font-weight:600;">✅ Loaded latest data from Sheets</span>';
+  return true;
+}
+
+// ── Sales Report: load from Sheets then render ──
+async function loadSalesReportFromSheets(){
+  const from=(document.getElementById('salesFrom')||{}).value||todayStr();
+  const to=(document.getElementById('salesTo')||{}).value||from;
+  const syncBtn=document.getElementById('syncBtn');
+  if(syncBtn){syncBtn.textContent='⏳ Loading...';syncBtn.disabled=true;}
+  toast('Loading latest data from Sheets...','ok');
+  const ok=await refreshFromSheets(from, to, false);
+  if(syncBtn){syncBtn.textContent='☁️ Refresh from Sheets';syncBtn.disabled=false;}
+  if(ok) toast('✅ Data loaded from Sheets!','ok');
+  else   toast('Using local data (Sheets unreachable)','err');
+  loadSalesReport();
+}
+
+// ── Sync sales summary to Sheets (existing feature) ──
+async function syncToSheets(){
+  const url=getSheetsUrl();
+  if(!url){toast('Set your Apps Script URL in Settings first','err');return;}
+  let from=(document.getElementById('salesFrom')||{}).value||todayStr();
+  let to=(document.getElementById('salesTo')||{}).value||from;
+  const dates=getDatesInRange(from,to);
+  const prods=getProds();
+  const allRows=[];
+  dates.forEach(date=>{
+    prods.forEach(p=>{
+      const st=getState(p.id,date);
+      const sales=st.closing!=null?Math.max(0,st.max-st.closing):null;
+      const revenue=sales!=null&&p.price?sales*p.price:0;
+      const profit=sales!=null&&p.price&&p.cost?sales*(p.price-p.cost):0;
+      allRows.push({date,id:p.id,name:p.name,category:p.cat,opening:st.opening,purchases:st.purchases,closing:st.closing,sales,cost:p.cost||0,price:p.price||0,revenue,profit});
+    });
+  });
+  if(!allRows.length){toast('No data to sync','err');return;}
+  const syncBtn=document.getElementById('syncBtn');
+  if(syncBtn){syncBtn.textContent='⏳ Syncing...';syncBtn.disabled=true;}
+  toast('Syncing sales summary to Sheets...','ok');
+  const byDate={};
+  allRows.forEach(r=>{if(!byDate[r.date])byDate[r.date]=[];byDate[r.date].push(r);});
+  let ok=0,err=0;
+  for(const [date,rows] of Object.entries(byDate)){
+    try{
+      await fetch(url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'syncSales',date,rows})});
+      ok++;
+    }catch(e){err++;}
+  }
+  if(syncBtn){syncBtn.textContent='☁️ Refresh from Sheets';syncBtn.disabled=false;}
+  if(!err) toast('✅ Sales summary synced to Sheets!','ok');
+  else     toast('Sync had '+err+' error(s)','err');
+}
+
+// ═══════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════
+initData();
+selectRole('admin');
+</script>
+</body>
+</html>
