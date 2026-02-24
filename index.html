@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sri Siri Foods</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<!-- Firebase SDK (for online sync across devices) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <style>
 /* ─── RESET ─────────────────────────────── */
 *{box-sizing:border-box;margin:0;padding:0;}
@@ -302,6 +305,7 @@ td{padding:11px 12px;vertical-align:middle;}
     <span class="hdr-title">🏪 Sri Siri Foods</span>
     <div class="hdr-right">
       <span class="hdr-clock" id="clock"></span>
+      <span id="syncBadge" style="font-size:11px;padding:3px 10px;border-radius:20px;display:none;cursor:default;"></span>
       <span class="badge" id="badge"></span>
       <button class="hdr-logout" onclick="doLogout()">Logout</button>
     </div>
@@ -536,6 +540,35 @@ td{padding:11px 12px;vertical-align:middle;}
         </div>
         <div id="sheetStatus" style="margin-top:12px;font-size:13px;"></div>
       </div>
+
+      <!-- Firebase Online Sync -->
+      <div class="card" style="border:2px solid #FFCC02;">
+        <div style="font-size:16px;font-weight:700;margin-bottom:6px;">🔥 Online Sync — Work from Two Locations</div>
+        <div style="font-size:13px;color:var(--sub);margin-bottom:4px;">
+          Staff in India enters data → you see it instantly from abroad. Uses free Firebase cloud storage.
+        </div>
+        <div style="background:#FFF8E1;border-radius:8px;padding:12px 14px;margin-bottom:16px;font-size:13px;color:#6D4C00;">
+          <b>One-time setup (5 mins):</b><br>
+          1. Go to <a href="https://console.firebase.google.com" target="_blank" style="color:var(--or);font-weight:600;">console.firebase.google.com</a><br>
+          2. Click <b>Add project</b> → give it any name → Continue<br>
+          3. Click <b>&lt;/&gt; Web</b> → register app → copy the <code>firebaseConfig</code> object<br>
+          4. In Firebase console → <b>Realtime Database</b> → Create database → Start in <b>test mode</b><br>
+          5. Paste the config JSON below and click Save &amp; Connect
+        </div>
+        <div class="field" style="margin-bottom:14px;">
+          <label>Firebase Config JSON (paste from Firebase console)</label>
+          <textarea id="fbConfigInput" rows="7"
+            placeholder='{&#10;  "apiKey": "AIzaSy...",&#10;  "authDomain": "your-app.firebaseapp.com",&#10;  "databaseURL": "https://your-app-default-rtdb.firebaseio.com",&#10;  "projectId": "your-app",&#10;  "storageBucket": "your-app.appspot.com",&#10;  "messagingSenderId": "123456789",&#10;  "appId": "1:123..."&#10;}'
+            style="width:100%;padding:10px 12px;border:2px solid var(--bdr);border-radius:8px;font-family:monospace;font-size:12px;outline:none;resize:vertical;line-height:1.5;"></textarea>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button class="btn btn-primary" onclick="saveFirebaseConfig()">💾 Save &amp; Connect</button>
+          <button class="btn btn-outline" onclick="testFirebaseConn()">🔌 Test Connection</button>
+          <button class="btn btn-ghost" onclick="pushAllToCloud()" title="Force push all local data to cloud">⬆ Push Local→Cloud</button>
+        </div>
+        <div id="fbStatus" style="margin-top:12px;font-size:13px;"></div>
+      </div>
+
     </div>
 
   </div><!-- /main -->
@@ -723,6 +756,8 @@ function boot() {
   if (!get(SK.U))  set(SK.U, []);
   if (!get(SK.PW)) set(SK.PW, {admin:'admin123',staff:'staff123'});
   if (!get(SK.CC)) set(SK.CC, []);
+  // Try to connect to Firebase if config was saved previously
+  initFirebase();
 }
 
 // ════════════════════════════════════════════════════════
@@ -801,10 +836,26 @@ function selectRole(r) {
   document.getElementById('loginErr').textContent = '';
 }
 
-function doLogin() {
+async function doLogin() {
   const pw = document.getElementById('loginPw').value;
   if (!role)            { document.getElementById('loginErr').textContent = 'Please select Admin or Staff.'; return; }
   if (pw !== pws()[role]) { document.getElementById('loginErr').textContent = 'Wrong password. Try again.'; return; }
+
+  // If Firebase is connected, pull latest data from cloud before showing the app
+  if (_fbDB) {
+    const loginBtn = document.querySelector('.login-btn');
+    const errEl    = document.getElementById('loginErr');
+    if (loginBtn) { loginBtn.textContent = '⏳ Loading from cloud…'; loginBtn.disabled = true; }
+    if (errEl)    errEl.textContent = '';
+    await pullAllFromCloud();
+    if (loginBtn) { loginBtn.textContent = 'Login →'; loginBtn.disabled = false; }
+    // Re-check password after cloud sync (in case it was updated remotely)
+    if (pw !== pws()[role]) {
+      document.getElementById('loginErr').textContent = 'Wrong password. Try again.';
+      return;
+    }
+  }
+
   // Switch screens
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('app').style.display = 'flex';
@@ -822,6 +873,13 @@ function doLogin() {
   // Pre-fill sheets URL
   const su = document.getElementById('sheetsUrl');
   if (su) { const saved = getSheetUrl(); if (saved) su.value = saved; }
+  // Pre-fill Firebase config textarea and show connection status
+  const fbInput = document.getElementById('fbConfigInput');
+  const fbCfg   = get('ssf4_fb_config');
+  if (fbInput && fbCfg) fbInput.value = JSON.stringify(fbCfg, null, 2);
+  updateFbStatusUI(!!_fbDB);
+  // Show sync badge
+  updateSyncBadge(!!_fbDB);
 
   if (role === 'admin') {
     showPage('sales'); loadSales(); renderProds(); renderCatChips(); renderUnlocked(); fillInvDropdowns();
@@ -1007,6 +1065,7 @@ function cellSave(pid, date, val) {
   t[date] = t[date].filter(x => !(x.pid === pid && x.type === 'closing'));
   t[date].push({ pid, type: 'closing', qty: n, ts: Date.now() });
   set(SK.T, t);
+  cloudWrite('txns', t); // Sync to cloud immediately
 
   // Live row update — no full re-render
   const row = document.getElementById('row_' + pid);
@@ -1270,6 +1329,7 @@ function saveInvTxn() {
     t[date] = t[date].filter(x => !(x.pid === pid && x.type === txnType));
   t[date].push({ pid, type: txnType, qty, ts: Date.now() });
   set(SK.T, t);
+  cloudWrite('txns', t); // Sync to cloud immediately
   document.getElementById('iQty').value = '';
   onIProd();
   toast(`✅ ${txnType} saved`, 'ok');
@@ -1312,12 +1372,15 @@ function addCat() {
   if (!name) { toast('Enter a category name', 'err'); return; }
   if (allCats().includes(name)) { toast('Category already exists', 'err'); return; }
   const cc = custCats(); cc.push(name); set(SK.CC, cc);
+  cloudWrite('categories', cc); // Sync to cloud
   el.value = ''; renderCatChips(); refreshAllDropdowns();
   toast('✅ Category added', 'ok');
 }
 
 function removeCat(name) {
-  set(SK.CC, custCats().filter(c => c !== name));
+  const cc = custCats().filter(c => c !== name);
+  set(SK.CC, cc);
+  cloudWrite('categories', cc); // Sync to cloud
   renderCatChips(); refreshAllDropdowns();
   toast('Category removed', 'ok');
 }
@@ -1373,6 +1436,7 @@ function saveProduct() {
   if (ps.find(p => p.id === id)) { toast('Product ID already exists', 'err'); return; }
   ps.push({ id, name, cat, cost, price, opening: open });
   set(SK.P, ps);
+  cloudWrite('products', ps); // Sync to cloud
   closeAddModal(); renderProds(); refreshAllDropdowns();
   toast('✅ Product added', 'ok');
 }
@@ -1385,13 +1449,14 @@ function changePw(r) {
   const val = el?.value.trim();
   if (!val || val.length < 4) { toast('Password must be at least 4 characters', 'err'); return; }
   const p = pws(); p[r] = val; set(SK.PW, p);
+  cloudWrite('passwords', p); // Sync to cloud
   el.value = ''; toast(`✅ ${r === 'admin' ? 'Admin' : 'Staff'} password updated`, 'ok');
 }
 
 function doUnlock() {
   const el = document.getElementById('ulDate'); const date = el?.value;
   if (!date) { toast('Select a date to unlock', 'err'); return; }
-  const ul = unlocked(); if (!ul.includes(date)) { ul.push(date); set(SK.U, ul); }
+  const ul = unlocked(); if (!ul.includes(date)) { ul.push(date); set(SK.U, ul); cloudWrite('unlocked', ul); }
   renderUnlocked(); toast('✅ Date unlocked for staff', 'ok');
 }
 
@@ -1408,8 +1473,154 @@ function renderUnlocked() {
 }
 
 function relock(date) {
-  set(SK.U, unlocked().filter(d => d !== date));
+  const ul = unlocked().filter(d => d !== date);
+  set(SK.U, ul);
+  cloudWrite('unlocked', ul); // Sync to cloud
   renderUnlocked(); toast('Date re-locked', 'ok');
+}
+
+// ════════════════════════════════════════════════════════
+// FIREBASE ONLINE SYNC
+// ════════════════════════════════════════════════════════
+let _fbDB = null;
+const FB_PATH = 'srisirifoods';
+
+function initFirebase() {
+  const cfg = get('ssf4_fb_config');
+  if (!cfg || !cfg.apiKey || !cfg.databaseURL) { updateSyncBadge(false); return false; }
+  try {
+    // Avoid re-initializing if already done
+    if (!firebase.apps.length) firebase.initializeApp(cfg);
+    _fbDB = firebase.database();
+    updateSyncBadge(true);
+    return true;
+  } catch(e) {
+    console.warn('Firebase init failed:', e.message);
+    _fbDB = null;
+    updateSyncBadge(false);
+    return false;
+  }
+}
+
+function updateSyncBadge(online) {
+  const b = document.getElementById('syncBadge');
+  if (!b) return;
+  b.style.display = 'inline-block';
+  if (online) {
+    b.textContent = '☁️ Online';
+    b.style.background = 'rgba(46,125,50,.25)';
+    b.style.color = '#81C784';
+    b.title = 'Connected to Firebase — data syncs automatically across devices';
+  } else {
+    b.textContent = '💾 Local';
+    b.style.background = 'rgba(255,255,255,.08)';
+    b.style.color = '#888';
+    b.title = 'Local storage only — go to Settings → Online Sync to enable cross-device access';
+  }
+}
+
+// Write a single key to Firebase (non-blocking)
+function cloudWrite(key, val) {
+  if (!_fbDB) return;
+  _fbDB.ref(`${FB_PATH}/${key}`).set(val)
+    .catch(e => console.warn('cloudWrite [' + key + ']:', e.message));
+}
+
+// Read a single key from Firebase
+async function cloudRead(key) {
+  if (!_fbDB) return null;
+  try {
+    const snap = await _fbDB.ref(`${FB_PATH}/${key}`).once('value');
+    return snap.exists() ? snap.val() : null;
+  } catch(e) {
+    console.warn('cloudRead [' + key + ']:', e.message);
+    return null;
+  }
+}
+
+// Pull all data from Firebase and update localStorage
+async function pullAllFromCloud() {
+  if (!_fbDB) return false;
+  try {
+    const snap = await _fbDB.ref(FB_PATH).once('value');
+    if (!snap.exists()) {
+      // First-time: push local data to seed the cloud
+      pushAllToCloud();
+      return true;
+    }
+    const d = snap.val();
+    if (d.products   && Array.isArray(d.products))   set(SK.P,  d.products);
+    if (d.txns       && typeof d.txns === 'object')   set(SK.T,  d.txns);
+    if (d.passwords  && typeof d.passwords === 'object') set(SK.PW, d.passwords);
+    if (d.categories && Array.isArray(d.categories))  set(SK.CC, d.categories);
+    if (d.unlocked   && Array.isArray(d.unlocked))    set(SK.U,  d.unlocked);
+    return true;
+  } catch(e) {
+    console.warn('pullAllFromCloud:', e.message);
+    return false;
+  }
+}
+
+// Push all local data to Firebase (overwrites cloud with local)
+function pushAllToCloud() {
+  if (!_fbDB) { toast('Firebase not configured', 'err'); return; }
+  _fbDB.ref(FB_PATH).set({
+    products:   prods(),
+    txns:       txns(),
+    passwords:  pws(),
+    categories: custCats(),
+    unlocked:   unlocked()
+  }).then(() => toast('✅ Local data pushed to cloud', 'ok'))
+    .catch(e => { console.warn('pushAllToCloud:', e.message); toast('Push failed: ' + e.message, 'err'); });
+}
+
+// Pull only transactions from Firebase (used by Refresh in Sales)
+async function pullTxnsFromCloud() {
+  const t = await cloudRead('txns');
+  if (t && typeof t === 'object') { set(SK.T, t); return true; }
+  return false;
+}
+
+// Save Firebase config entered by user
+function saveFirebaseConfig() {
+  const el = document.getElementById('fbConfigInput');
+  if (!el || !el.value.trim()) { toast('Paste your Firebase config JSON first', 'err'); return; }
+  let cfg;
+  try {
+    // Strip the "const firebaseConfig = " wrapper if user pasted the whole snippet
+    let raw = el.value.trim().replace(/^const\s+\w+\s*=\s*/, '').replace(/;\s*$/, '');
+    cfg = JSON.parse(raw);
+  } catch(e) { toast('Invalid JSON — check your config format', 'err'); return; }
+  if (!cfg.apiKey)       { toast('Missing apiKey in config', 'err'); return; }
+  if (!cfg.databaseURL)  { toast('Missing databaseURL — enable Realtime Database in Firebase console', 'err'); return; }
+  set('ssf4_fb_config', cfg);
+  // Re-init with new config
+  _fbDB = null;
+  try { firebase.apps.forEach(a => a.delete()); } catch(e) {}
+  const ok = initFirebase();
+  updateFbStatusUI(ok);
+  if (ok) { toast('✅ Firebase connected! Syncing data…', 'ok'); pushAllToCloud(); }
+  else    toast('Connection failed — check config and Firebase rules', 'err');
+}
+
+async function testFirebaseConn() {
+  if (!_fbDB) { toast('Save a valid Firebase config first', 'err'); return; }
+  try {
+    await _fbDB.ref(`${FB_PATH}/_ping`).set(Date.now());
+    toast('✅ Firebase is working!', 'ok');
+    updateFbStatusUI(true);
+  } catch(e) {
+    toast('Connection failed: ' + e.message, 'err');
+    updateFbStatusUI(false);
+  }
+}
+
+function updateFbStatusUI(ok) {
+  const st = document.getElementById('fbStatus');
+  if (!st) return;
+  st.innerHTML = ok
+    ? '<span style="color:var(--gn);font-weight:700;">✅ Connected to Firebase — data syncs automatically across devices</span>'
+    : '<span style="color:#E65100;font-weight:600;">❌ Not connected — paste your Firebase config JSON above and click Save &amp; Connect</span>';
 }
 
 // ════════════════════════════════════════════════════════
@@ -1447,6 +1658,21 @@ async function refreshSheets() {
   const to   = document.getElementById('sTo')?.value   || from;
   const btn  = document.getElementById('refreshBtn');
   if (btn) { btn.textContent = '⏳ Loading…'; btn.disabled = true; }
+
+  // Try Firebase first (preferred cloud source)
+  if (_fbDB) {
+    try {
+      const pulled = await pullTxnsFromCloud();
+      if (pulled) {
+        loadSales();
+        toast('✅ Latest data loaded from cloud!', 'ok');
+        if (btn) { btn.textContent = '☁️ Refresh'; btn.disabled = false; }
+        return;
+      }
+    } catch(e) { console.warn('Firebase refresh failed, trying Sheets…', e.message); }
+  }
+
+  // Fall back to Google Sheets
   try {
     const url = getSheetUrl();
     const r = await fetch(`${url}?action=loadTxns&fromDate=${from}&toDate=${to}`);
@@ -1459,7 +1685,7 @@ async function refreshSheets() {
       toast('✅ Latest data loaded from Sheets!', 'ok');
     } else throw new Error('No data returned');
   } catch(e) {
-    toast('Using local data (Sheets unreachable)', 'err');
+    toast('Could not refresh — showing local data', 'err');
     console.warn('refreshSheets:', e.message);
   }
   if (btn) { btn.textContent = '☁️ Refresh'; btn.disabled = false; }
