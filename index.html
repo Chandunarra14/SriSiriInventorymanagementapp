@@ -142,7 +142,7 @@ td{padding:11px 12px;vertical-align:middle;}
       <button class="role-tab" id="rtab-admin" data-role="admin">👑 Admin</button>
       <button class="role-tab" id="rtab-staff" data-role="staff">🧑‍💼 Staff</button>
     </div>
-    <div class="lfield"><label>Password</label><input type="password" id="loginPw" placeholder="Enter password" id="loginPwInput"></div>
+    <div class="lfield"><label>Password</label><input type="password" id="loginPw" placeholder="Enter password"></div>
     <button class="login-btn" id="loginBtn">Login →</button>
     <div class="login-err" id="loginErr"></div>
   </div>
@@ -1121,7 +1121,7 @@ document.querySelectorAll('[data-role]').forEach(btn => {
   btn.addEventListener('click', () => selectRole(btn.dataset.role));
 });
 document.getElementById('loginBtn')?.addEventListener('click', doLogin);
-document.getElementById('loginPwInput')?.addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+document.getElementById('loginPw')?.addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
 
 </script>
 </body>
