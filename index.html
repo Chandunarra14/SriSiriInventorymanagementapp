@@ -139,11 +139,11 @@ td{padding:11px 12px;vertical-align:middle;}
   <div class="login-box">
     <div class="login-logo"><span class="ico">🏪</span><h1>Sri Siri Foods</h1><p>Inventory Management</p></div>
     <div class="role-tabs">
-      <button class="role-tab" id="rtab-admin" onclick="selectRole('admin')">👑 Admin</button>
-      <button class="role-tab" id="rtab-staff" onclick="selectRole('staff')">🧑‍💼 Staff</button>
+      <button class="role-tab" id="rtab-admin" data-role="admin">👑 Admin</button>
+      <button class="role-tab" id="rtab-staff" data-role="staff">🧑‍💼 Staff</button>
     </div>
-    <div class="lfield"><label>Password</label><input type="password" id="loginPw" placeholder="Enter password" onkeydown="if(event.key==='Enter')doLogin()"></div>
-    <button class="login-btn" id="loginBtn" onclick="doLogin()">Login →</button>
+    <div class="lfield"><label>Password</label><input type="password" id="loginPw" placeholder="Enter password" id="loginPwInput"></div>
+    <button class="login-btn" id="loginBtn">Login →</button>
     <div class="login-err" id="loginErr"></div>
   </div>
 </div>
@@ -587,14 +587,9 @@ let role = null, dayData = {}, salesData = {}, salesRows = [];
 let hiddenCols = new Set(), activePill = 'all', txnType = 'closing';
 let passwords = {admin:'admin123',staff:'staff123'};
 let unlockedDates = [], customCats = [];
-let permissions = {
-  canUpdateOpening:   false,
-  canUpdatePrice:     false,
-  canUpdatePurchases: true,   // on by default
-  canViewSales:       true    // on by default
-};
-let invDayData = {}; // for inventory page table
-let editInvPid = null, editInvDate = null; // for edit modal
+let permissions = {canUpdateOpening:false,canUpdatePrice:false,canUpdatePurchases:true,canViewSales:true};
+let invDayData = {};
+let editInvPid = null, editInvDate = null;
 const allCats = () => [...new Set([...PRODUCTS.map(p=>p.cat),...customCats])].sort();
 
 // ── HELPERS ───────────────────────────────────────────────────
@@ -642,7 +637,7 @@ async function doLogin() {
   buildNav(); startClock();
   const t=today();
   ['sDate','sFrom','sTo','iDate','ulDate'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=t;});
-  if(role==='admin'){showPage('sales');renderCatChips();renderProds();renderUnlocked();renderPerms();fillInvDropdowns();fillInvCatFilter();loadSalesFromCloud();}
+  if(role==='admin'){showPage('sales');renderCatChips();renderProds();renderUnlocked();renderPerms();fillInvCatFilter();loadSalesFromCloud();}
   else{showPage('update');fillStaffCats();loadDayData();}
 }
 
@@ -717,59 +712,17 @@ function renderStaff() {
   if(!rows.length){wrap.innerHTML='<div class="empty">No products match filters.</div>';return;}
   const bycat={};
   rows.forEach(r=>{if(!bycat[r.cat])bycat[r.cat]=[];bycat[r.cat].push(r);});
-
-  // Build header based on permissions
-  let thExtra = '';
-  if(permissions.canUpdateOpening) thExtra += '<th style="text-align:center;width:110px;">Opening</th>';
-  if(permissions.canUpdatePurchases) thExtra += '<th style="text-align:center;width:110px;">Purchases</th>';
-  if(permissions.canUpdatePrice) thExtra += '<th style="text-align:center;width:90px;">Price ₹</th>';
-
-  let html=`<table><thead><tr>
-    <th style="min-width:200px;">Product</th>
-    ${thExtra}
-    <th style="text-align:center;width:95px;">Available</th>
-    <th style="text-align:center;width:140px;">Closing Stock</th>
-    <th style="text-align:center;width:80px;">Status</th>
-  </tr></thead><tbody>`;
-
+  let html=`<table><thead><tr><th style="min-width:220px;">Product</th><th style="text-align:center;width:90px;">Opening</th><th style="text-align:center;width:90px;">Purchases</th><th style="text-align:center;width:95px;">Available</th><th style="text-align:center;width:140px;">Closing Stock</th><th style="text-align:center;width:80px;">Status</th></tr></thead><tbody>`;
   Object.entries(bycat).forEach(([catName,catRows])=>{
     const done=catRows.filter(r=>r.closing!==null).length;
-    const colspan = 4 + (permissions.canUpdateOpening?1:0) + (permissions.canUpdatePurchases?1:0) + (permissions.canUpdatePrice?1:0);
-    html+=`<tr style="background:linear-gradient(90deg,#F9F4EE,#FAFAF7);"><td colspan="${colspan}" style="padding:9px 14px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.9px;color:#7A5A00;">🗂 ${catName}&ensp;<span style="font-weight:400;color:var(--sub);">(${done}/${catRows.length} done)</span></td></tr>`;
+    html+=`<tr style="background:linear-gradient(90deg,#F9F4EE,#FAFAF7);"><td colspan="6" style="padding:9px 14px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.9px;color:#7A5A00;">🗂 ${catName}&ensp;<span style="font-weight:400;color:var(--sub);">(${done}/${catRows.length} done)</span></td></tr>`;
     catRows.forEach(r=>{
       const isDone=r.closing!==null;
       const avColor=r.available===0?'var(--rd)':r.available<=5?'#E65100':'#1A1A1A';
-      const prod=PRODUCTS.find(p=>p.id===r.id)||{};
-
-      let tdExtra = '';
-      if(permissions.canUpdateOpening) {
-        tdExtra += `<td style="text-align:center;">
-          <input type="number" id="op_${r.id}" min="0" value="${r.opening}"
-            style="width:76px;padding:7px;border:2px solid var(--bdr);border-radius:8px;font-size:14px;text-align:center;outline:none;"
-            onfocus="this.style.borderColor='#E8820C';"
-            onblur="staffSaveOpening('${r.id}','${date}',this.value)">
-        </td>`;
-      }
-      if(permissions.canUpdatePurchases) {
-        tdExtra += `<td style="text-align:center;">
-          <input type="number" id="pu_${r.id}" min="0" value="${r.purchases||0}"
-            style="width:76px;padding:7px;border:2px solid ${r.purchases>0?'var(--bl)':'var(--bdr)'};border-radius:8px;font-size:14px;text-align:center;outline:none;color:${r.purchases>0?'var(--bl)':'#1A1A1A'};font-weight:${r.purchases>0?700:400};"
-            onfocus="this.style.borderColor='var(--bl)';"
-            onblur="staffSavePurchase('${r.id}','${date}',this.value)">
-        </td>`;
-      }
-      if(permissions.canUpdatePrice) {
-        tdExtra += `<td style="text-align:center;">
-          <input type="number" id="pr_${r.id}" min="0" value="${prod.price||0}"
-            style="width:76px;padding:7px;border:2px solid var(--bdr);border-radius:8px;font-size:14px;text-align:center;outline:none;"
-            onfocus="this.style.borderColor='#E8820C';"
-            onblur="staffSavePrice('${r.id}',this.value)">
-        </td>`;
-      }
-
       html+=`<tr id="row_${r.id}" style="background:${isDone?'#F7FFFA':'#fff'}">
         <td><div class="prod-name">${r.name}</div><div class="prod-id">${r.id}</div></td>
-        ${tdExtra}
+        <td style="text-align:center;color:var(--sub);">${r.opening}</td>
+        <td style="text-align:center;color:var(--bl);">${r.purchases>0?`<b>+${r.purchases}</b>`:r.purchases}</td>
         <td style="text-align:center;font-weight:700;color:${avColor};">${r.available}</td>
         <td style="text-align:center;">
           <input type="number" id="cl_${r.id}" min="0"
@@ -788,61 +741,6 @@ function renderStaff() {
   });
   wrap.innerHTML=html+'</tbody></table>';
 }
-
-// Staff saves opening stock (if permitted)
-async function staffSaveOpening(pid, date, val) {
-  const n=parseInt(val); if(isNaN(n)||n<0)return;
-  if(!dayData[pid]) dayData[pid]={};
-  dayData[pid].opening=n;
-  const prod=PRODUCTS.find(p=>p.id===pid)||{};
-  cbar('staffCbar','staffCmsg','saving','☁️ Saving opening stock…');
-  const ok=await dbSaveProduct(date,pid,{
-    opening:n,
-    purchases:dayData[pid].purchases||0,
-    closing:dayData[pid].closing!==undefined?dayData[pid].closing:null,
-    ts:Date.now()
-  });
-  cbar('staffCbar','staffCmsg',ok?'ok':'err',ok?'✅ Opening stock saved':'❌ Save failed');
-  if(ok) updateProgress();
-}
-
-// Staff saves purchases (if permitted)
-async function staffSavePurchase(pid, date, val) {
-  const n=parseInt(val); if(isNaN(n)||n<0)return;
-  if(!dayData[pid]) dayData[pid]={};
-  dayData[pid].purchases=n;
-  const prod=PRODUCTS.find(p=>p.id===pid)||{};
-  cbar('staffCbar','staffCmsg','saving','☁️ Saving purchases…');
-  const ok=await dbSaveProduct(date,pid,{
-    opening:dayData[pid].opening!==undefined?dayData[pid].opening:(prod.opening||0),
-    purchases:n,
-    closing:dayData[pid].closing!==undefined?dayData[pid].closing:null,
-    ts:Date.now()
-  });
-  cbar('staffCbar','staffCmsg',ok?'ok':'err',ok?'✅ Purchase saved':'❌ Save failed');
-  // Update available column
-  const s=getState(pid);
-  const row=document.getElementById('row_'+pid);
-  if(row){
-    const avCell=row.cells[permissions.canUpdateOpening?2:permissions.canUpdatePurchases?2:1];
-    if(avCell){
-      const av=s.available;
-      const color=av===0?'var(--rd)':av<=5?'#E65100':'#1A1A1A';
-      avCell.innerHTML=`<span style="font-weight:700;color:${color};">${av}</span>`;
-    }
-    const inp=document.getElementById('pu_'+pid);
-    if(inp){inp.style.borderColor=n>0?'var(--bl)':'var(--bdr)';inp.style.color=n>0?'var(--bl)':'#1A1A1A';inp.style.fontWeight=n>0?'700':'400';}
-  }
-}
-
-// Staff saves price (if permitted) — stored in Firebase under products/prices
-async function staffSavePrice(pid, val) {
-  const n=parseInt(val); if(isNaN(n)||n<0)return;
-  const ok=await dbSaveSetting('prices_'+pid,{price:n,pid,updatedAt:new Date().toISOString()});
-  cbar('staffCbar','staffCmsg',ok?'ok':'err',ok?'✅ Price updated':'❌ Save failed');
-  if(ok) toast(`✅ Price updated to ₹${n}`,'ok');
-}
-
 
 function cellBlur(pid,date,el){const v=el.value.trim();if(v==='')return;cellSave(pid,date,v,false);}
 
@@ -885,46 +783,9 @@ async function doSubmit(){
   const date=document.getElementById('sDate')?.value||today();
   const done=PRODUCTS.filter(p=>getState(p.id).closing!==null);
   if(!done.length){toast('No closing stock entered yet.','err');return;}
-  toast(`✅ ${done.length} products saved for ${fmtDate(date)}`,'ok');
+  toast(`✅ ${done.length} products saved for ${fmtDate(date)} — admin can see this now!`,'ok');
   cbar('staffCbar','staffCmsg','ok',`✅ ${done.length}/${PRODUCTS.length} products submitted for ${fmtDate(date)}`);
-  // Show EOD summary if admin has enabled it
-  if(permissions.canViewSales) showEodModal(date);
 }
-
-function showEodModal(date) {
-  const rows = PRODUCTS.map(p=>{
-    const s=getState(p.id);
-    const sold=s.closing!==null?Math.max(0,s.available-s.closing):null;
-    return {...p,...s,sold,revenue:sold!=null?sold*(p.price||0):0,profit:sold!=null?sold*((p.price||0)-(p.cost||0)):0};
-  }).filter(r=>r.closing!==null);
-
-  const totalRev=rows.reduce((a,r)=>a+r.revenue,0);
-  const totalProfit=rows.reduce((a,r)=>a+r.profit,0);
-  const totalSold=rows.reduce((a,r)=>a+(r.sold||0),0);
-  const totalDone=rows.length;
-
-  document.getElementById('eodDate').textContent=`Summary for ${fmtDate(date)}`;
-  document.getElementById('eodStats').innerHTML=`
-    <div class="eod-stat"><div class="eod-val" style="color:var(--or);">₹${totalRev.toLocaleString('en-IN')}</div><div class="eod-lbl">Revenue</div></div>
-    <div class="eod-stat"><div class="eod-val" style="color:var(--gn);">₹${totalProfit.toLocaleString('en-IN')}</div><div class="eod-lbl">Profit</div></div>
-    <div class="eod-stat"><div class="eod-val" style="color:var(--bl);">${totalSold}</div><div class="eod-lbl">Units Sold</div></div>
-    <div class="eod-stat"><div class="eod-val" style="color:#7B1FA2;">${totalDone}</div><div class="eod-lbl">Products Updated</div></div>`;
-
-  const sold=rows.filter(r=>r.sold>0).sort((a,b)=>b.revenue-a.revenue);
-  let tbl=`<div style="font-size:12px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Products Sold Today</div>`;
-  if(!sold.length){tbl+='<div class="empty" style="padding:20px;">No sales recorded yet.</div>';}
-  else{
-    tbl+=`<table><thead><tr><th>Product</th><th style="text-align:center;">Opening</th><th style="text-align:center;">Purchased</th><th style="text-align:center;">Closing</th><th style="text-align:center;">Sold</th><th style="text-align:right;">Revenue</th><th style="text-align:right;">Profit</th></tr></thead><tbody>`;
-    sold.forEach(r=>{
-      const pc=r.profit>0?'var(--gn)':r.profit<0?'var(--rd)':'#1A1A1A';
-      tbl+=`<tr><td><div class="prod-name" style="font-size:13px;">${r.name}</div></td><td style="text-align:center;">${r.opening}</td><td style="text-align:center;color:var(--bl);">${r.purchases}</td><td style="text-align:center;">${r.closing}</td><td style="text-align:center;font-weight:700;">${r.sold}</td><td style="text-align:right;">₹${r.revenue.toLocaleString('en-IN')}</td><td style="text-align:right;color:${pc};">₹${r.profit.toLocaleString('en-IN')}</td></tr>`;
-    });
-    tbl+='</tbody></table>';
-  }
-  document.getElementById('eodTable').innerHTML=tbl;
-  document.getElementById('eodModal').classList.add('show');
-}
-function closeEodModal(){ document.getElementById('eodModal').classList.remove('show'); }
 
 // ── ADMIN: SALES ──────────────────────────────────────────────
 async function loadSalesFromCloud(){
@@ -998,116 +859,52 @@ function exportCSV(){
   toast('CSV downloaded','ok');
 }
 
-// ── ADMIN: INVENTORY TABLE ────────────────────────────────────
-function fillInvDropdowns(){ fillInvCatFilter(); } // kept for compatibility
-function fillInvCatFilter(){
-  const sel=document.getElementById('iCatFilter'); if(!sel)return;
-  sel.innerHTML='<option value="">All Categories</option>'+allCats().map(cat=>`<option value="${cat}">${cat}</option>`).join('');
+// ── ADMIN: INVENTORY ──────────────────────────────────────────
+function setTxnType(t,btn){txnType=t;document.querySelectorAll('.ttype-btn').forEach(b=>b.className='ttype-btn');btn.className='ttype-btn '+t;}
+function fillInvDropdowns(){
+  const cs=document.getElementById('iCat');if(!cs)return;
+  cs.innerHTML='<option value="">All Categories</option>'+allCats().map(c=>`<option value="${c}">${c}</option>`).join('');
+  fillInvProds();
 }
-function onICat(){}
-function onIDate(){ loadInvTable(); }
-
-async function loadInvTable(){
+function onICat(){fillInvProds();document.getElementById('prodInfo').classList.remove('show');}
+function fillInvProds(){
+  const cat=document.getElementById('iCat')?.value||'';
+  const ps=PRODUCTS.filter(p=>!cat||p.cat===cat);
+  const sel=document.getElementById('iProd');if(!sel)return;
+  sel.innerHTML='<option value="">Select product…</option>'+ps.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+  document.getElementById('prodInfo').classList.remove('show');
+}
+async function onIProd(){
+  const pid=document.getElementById('iProd')?.value||'';
   const date=document.getElementById('iDate')?.value||today();
-  cbar('invCbar','invCmsg','loading',`⏳ Loading inventory for ${fmtDate(date)}…`);
-  invDayData=await dbGetDay(date);
-  cbar('invCbar','invCmsg','ok',`✅ Loaded ${Object.keys(invDayData).length} records for ${fmtDate(date)}`);
-  renderInvTable();
+  if(!pid){document.getElementById('prodInfo').classList.remove('show');return;}
+  const day=await dbGetDay(date), s=day[pid]||{}, prod=PRODUCTS.find(p=>p.id===pid)||{};
+  const opening=s.opening!==undefined?s.opening:(prod.opening||0);
+  const purchases=s.purchases!==undefined?s.purchases:0;
+  const closing=s.closing!==undefined?s.closing:null;
+  document.getElementById('prodInfoGrid').innerHTML=`
+    <div class="info-cell"><div class="info-val">${opening}</div><div class="info-lbl">Opening</div></div>
+    <div class="info-cell"><div class="info-val" style="color:var(--bl)">${purchases}</div><div class="info-lbl">Purchases</div></div>
+    <div class="info-cell"><div class="info-val" style="color:var(--or)">${opening+purchases}</div><div class="info-lbl">Available</div></div>
+    <div class="info-cell"><div class="info-val" style="color:var(--gn)">${closing??'—'}</div><div class="info-lbl">Closing</div></div>`;
+  document.getElementById('prodInfo').classList.add('show');
 }
-
-function renderInvTable(){
-  const wrap=document.getElementById('invTable'); if(!wrap)return;
+function onIDate(){onIProd();}
+async function saveInvTxn(){
   const date=document.getElementById('iDate')?.value||today();
-  const cat=document.getElementById('iCatFilter')?.value||'';
-  const q=(document.getElementById('iSearch')?.value||'').toLowerCase();
-
-  let rows=PRODUCTS.map(p=>{
-    const s=invDayData[p.id]||{};
-    const opening=s.opening!==undefined?s.opening:(p.opening||0);
-    const purchases=s.purchases!==undefined?s.purchases:0;
-    const closing=s.closing!==undefined?s.closing:null;
-    const available=opening+purchases;
-    const sold=closing!==null?Math.max(0,available-closing):null;
-    return {...p,opening,purchases,closing,available,sold,
-      revenue:sold!=null?sold*(p.price||0):0,
-      profit:sold!=null?sold*((p.price||0)-(p.cost||0)):0,
-      hasData:s.closing!==undefined||s.opening!==undefined||s.purchases!==undefined};
-  });
-
-  if(cat) rows=rows.filter(r=>r.cat===cat);
-  if(q)   rows=rows.filter(r=>r.name.toLowerCase().includes(q)||r.id.toLowerCase().includes(q));
-
-  if(!rows.length){wrap.innerHTML='<div class="empty">No products found.</div>';return;}
-
-  let html=`<table><thead><tr>
-    <th style="min-width:200px;">Product</th>
-    <th style="text-align:center;">Opening</th>
-    <th style="text-align:center;">Purchases</th>
-    <th style="text-align:center;">Available</th>
-    <th style="text-align:center;">Closing</th>
-    <th style="text-align:center;">Sold</th>
-    <th style="text-align:right;">Revenue ₹</th>
-    <th style="text-align:right;">Profit ₹</th>
-    <th style="text-align:center;">Edit</th>
-  </tr></thead><tbody>`;
-
-  rows.forEach(r=>{
-    const avColor=r.available===0?'var(--rd)':r.available<=5?'#E65100':'#1A1A1A';
-    const pc=r.profit>0?'var(--gn)':r.profit<0?'var(--rd)':'#1A1A1A';
-    const rowBg=r.hasData?(r.closing!==null?'#F7FFFA':'#FFFBF0'):'#fff';
-    html+=`<tr style="background:${rowBg};">
-      <td><div class="prod-name">${r.name}</div><div class="prod-id">${r.cat}</div></td>
-      <td style="text-align:center;color:var(--sub);">${r.opening}</td>
-      <td style="text-align:center;color:${r.purchases>0?'var(--bl)':'var(--sub)'};">${r.purchases>0?'+'+r.purchases:r.purchases}</td>
-      <td style="text-align:center;font-weight:700;color:${avColor};">${r.available}</td>
-      <td style="text-align:center;font-weight:600;color:${r.closing!==null?'var(--gn)':'var(--sub)'};">${r.closing!==null?r.closing:'—'}</td>
-      <td style="text-align:center;font-weight:600;">${r.sold!==null?r.sold:'—'}</td>
-      <td style="text-align:right;">${r.revenue>0?'₹'+r.revenue.toLocaleString('en-IN'):'—'}</td>
-      <td style="text-align:right;color:${pc};">${r.profit!==0?'₹'+r.profit.toLocaleString('en-IN'):'—'}</td>
-      <td style="text-align:center;">
-        <button onclick="openEditInv('${r.id}','${date}')" style="padding:5px 12px;border:1.5px solid var(--or);border-radius:6px;background:var(--or1);color:var(--or2);font-size:12px;font-weight:600;cursor:pointer;">✏️ Edit</button>
-      </td>
-    </tr>`;
-  });
-  wrap.innerHTML=html+'</tbody></table>';
+  const pid=document.getElementById('iProd')?.value||'';
+  const qty=parseInt(document.getElementById('iQty')?.value||'');
+  if(!pid){toast('Select a product','err');return;}
+  if(isNaN(qty)||qty<0){toast('Enter a valid quantity','err');return;}
+  const day=await dbGetDay(date), s=day[pid]||{}, prod=PRODUCTS.find(p=>p.id===pid)||{};
+  const cur={opening:s.opening!==undefined?s.opening:(prod.opening||0),purchases:s.purchases!==undefined?s.purchases:0,closing:s.closing!==undefined?s.closing:null};
+  if(txnType==='closing') cur.closing=qty;
+  if(txnType==='opening') cur.opening=qty;
+  if(txnType==='purchase') cur.purchases=(cur.purchases||0)+qty;
+  await dbSaveProduct(date,pid,{...cur,ts:Date.now()});
+  document.getElementById('iQty').value=''; await onIProd();
+  toast(`✅ ${txnType} saved to cloud`,'ok');
 }
-
-async function openEditInv(pid, date){
-  editInvPid=pid; editInvDate=date;
-  const s=invDayData[pid]||{};
-  const prod=PRODUCTS.find(p=>p.id===pid)||{};
-  document.getElementById('editInvProdName').textContent=`${prod.name} · ${fmtDate(date)}`;
-  document.getElementById('editOpening').value=s.opening!==undefined?s.opening:(prod.opening||0);
-  document.getElementById('editPurchases').value=s.purchases!==undefined?s.purchases:0;
-  document.getElementById('editClosing').value=s.closing!==undefined?s.closing:'';
-  document.getElementById('editPrice').value=prod.price||0;
-  document.getElementById('editCost').value=prod.cost||0;
-  document.getElementById('editInvModal').classList.add('show');
-}
-function closeEditInvModal(){ document.getElementById('editInvModal').classList.remove('show'); editInvPid=null; editInvDate=null; }
-
-async function saveEditInv(){
-  if(!editInvPid||!editInvDate)return;
-  const opening=parseInt(document.getElementById('editOpening').value)||0;
-  const purchases=parseInt(document.getElementById('editPurchases').value)||0;
-  const closingRaw=document.getElementById('editClosing').value;
-  const closing=closingRaw!==''?parseInt(closingRaw):null;
-
-  const ok=await dbSaveProduct(editInvDate, editInvPid, {opening,purchases,closing:closing!==null?closing:null,ts:Date.now()});
-  if(ok){
-    invDayData[editInvPid]={opening,purchases,closing};
-    closeEditInvModal();
-    renderInvTable();
-    toast('✅ Record updated in Firebase','ok');
-    cbar('invCbar','invCmsg','ok',`✅ Record updated for ${editInvPid}`);
-  } else {
-    toast('❌ Save failed — check connection','err');
-  }
-}
-
-// kept for compatibility — not used in new inventory page
-async function saveInvTxn(){ toast('Use the Edit button in the table','err'); }
-async function onIProd(){}
 
 // ── ADMIN: PRODUCTS ───────────────────────────────────────────
 function renderCatChips(){
@@ -1165,7 +962,7 @@ async function togglePerm(key){
   permissions[key]=!permissions[key];
   renderPerms();
   await dbSaveSetting('permissions',permissions);
-  toast(`✅ ${permissions[key]?'Enabled':'Disabled'}: ${key.replace('canUpdate','').replace('canView','')} for staff`,'ok');
+  toast('✅ Permission '+(permissions[key]?'enabled':'disabled'),'ok');
 }
 async function relock(date){
   unlockedDates=unlockedDates.filter(d=>d!==date); await dbSaveSetting('unlocked',{dates:unlockedDates});
@@ -1173,7 +970,159 @@ async function relock(date){
 }
 
 // ── EXPOSE TO HTML onclick= ────────────────────────────────────
-Object.assign(window,{selectRole,doLogin,doLogout,showPage,onSDateChange,renderStaff,setPill,cellBlur,cellSave,doSubmit,loadDayData,loadSalesFromCloud,setQuick,onSalesDate,toggleCol,exportCSV,setTxnType,onICat,onIProd,onIDate,saveInvTxn,openAddModal,closeAddModal,saveProduct,addCat,removeCat,changePw,doUnlock,relock,togglePerm,closeEodModal,loadInvTable,renderInvTable,openEditInv,closeEditInvModal,saveEditInv,staffSaveOpening,staffSavePurchase,staffSavePrice,fillInvDropdowns});
+Object.assign(window,{selectRole,doLogin,doLogout,showPage,onSDateChange,renderStaff,setPill,cellBlur,cellSave,doSubmit,loadDayData,loadSalesFromCloud,setQuick,onSalesDate,toggleCol,exportCSV,setTxnType,onICat,onIProd,onIDate,saveInvTxn,openAddModal,closeAddModal,saveProduct,addCat,removeCat,changePw,doUnlock,relock});
+
+
+async function staffSaveOpening(pid,date,val){
+  const n=parseInt(val);if(isNaN(n)||n<0)return;
+  if(!dayData[pid])dayData[pid]={};
+  dayData[pid].opening=n;
+  const prod=PRODUCTS.find(p=>p.id===pid)||{};
+  cbar('staffCbar','staffCmsg','saving','☁️ Saving…');
+  const ok=await dbSaveProduct(date,pid,{opening:n,purchases:dayData[pid].purchases||0,closing:dayData[pid].closing!==undefined?dayData[pid].closing:null,ts:Date.now()});
+  cbar('staffCbar','staffCmsg',ok?'ok':'err',ok?'✅ Opening saved':'❌ Save failed');
+}
+async function staffSavePurchase(pid,date,val){
+  const n=parseInt(val);if(isNaN(n)||n<0)return;
+  if(!dayData[pid])dayData[pid]={};
+  dayData[pid].purchases=n;
+  const prod=PRODUCTS.find(p=>p.id===pid)||{};
+  cbar('staffCbar','staffCmsg','saving','☁️ Saving purchases…');
+  const ok=await dbSaveProduct(date,pid,{opening:dayData[pid].opening!==undefined?dayData[pid].opening:(prod.opening||0),purchases:n,closing:dayData[pid].closing!==undefined?dayData[pid].closing:null,ts:Date.now()});
+  cbar('staffCbar','staffCmsg',ok?'ok':'err',ok?'✅ Purchase saved':'❌ Save failed');
+  updateProgress();
+}
+async function staffSavePrice(pid,val){
+  const n=parseInt(val);if(isNaN(n)||n<0)return;
+  const ok=await dbSaveSetting('price_'+pid,{price:n,pid,updatedAt:new Date().toISOString()});
+  if(ok)toast('✅ Price updated to ₹'+n,'ok');
+}
+
+
+function showEodModal(date){
+  const rows=PRODUCTS.map(p=>{
+    const s=getState(p.id);
+    const sold=s.closing!==null?Math.max(0,s.available-s.closing):null;
+    return {...p,...s,sold,revenue:sold!=null?sold*(p.price||0):0,profit:sold!=null?sold*((p.price||0)-(p.cost||0)):0};
+  }).filter(r=>r.closing!==null);
+  const totalRev=rows.reduce((a,r)=>a+r.revenue,0);
+  const totalProfit=rows.reduce((a,r)=>a+r.profit,0);
+  const totalSold=rows.reduce((a,r)=>a+(r.sold||0),0);
+  document.getElementById('eodDate').textContent='Summary for '+fmtDate(date);
+  document.getElementById('eodStats').innerHTML=`
+    <div class="eod-stat"><div class="eod-val" style="color:var(--or);">₹${totalRev.toLocaleString('en-IN')}</div><div class="eod-lbl">Revenue</div></div>
+    <div class="eod-stat"><div class="eod-val" style="color:var(--gn);">₹${totalProfit.toLocaleString('en-IN')}</div><div class="eod-lbl">Profit</div></div>
+    <div class="eod-stat"><div class="eod-val" style="color:var(--bl);">${totalSold}</div><div class="eod-lbl">Units Sold</div></div>
+    <div class="eod-stat"><div class="eod-val" style="color:#7B1FA2;">${rows.length}</div><div class="eod-lbl">Products Updated</div></div>`;
+  const sold=rows.filter(r=>r.sold>0).sort((a,b)=>b.revenue-a.revenue);
+  let tbl='';
+  if(!sold.length){tbl='<div class="empty" style="padding:20px;">No sales recorded yet.</div>';}
+  else{
+    tbl='<div style="font-size:12px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Products Sold Today</div>';
+    tbl+=`<table><thead><tr><th>Product</th><th style="text-align:center;">Opening</th><th style="text-align:center;">Purchased</th><th style="text-align:center;">Closing</th><th style="text-align:center;">Sold</th><th style="text-align:right;">Revenue</th><th style="text-align:right;">Profit</th></tr></thead><tbody>`;
+    sold.forEach(r=>{
+      const pc=r.profit>0?'var(--gn)':r.profit<0?'var(--rd)':'#1A1A1A';
+      tbl+=`<tr><td><div class="prod-name" style="font-size:13px;">${r.name}</div></td><td style="text-align:center;">${r.opening}</td><td style="text-align:center;color:var(--bl);">${r.purchases}</td><td style="text-align:center;">${r.closing}</td><td style="text-align:center;font-weight:700;">${r.sold}</td><td style="text-align:right;">₹${r.revenue.toLocaleString('en-IN')}</td><td style="text-align:right;color:${pc};">₹${r.profit.toLocaleString('en-IN')}</td></tr>`;
+    });
+    tbl+='</tbody></table>';
+  }
+  document.getElementById('eodTable').innerHTML=tbl;
+  document.getElementById('eodModal').classList.add('show');
+}
+function closeEodModal(){document.getElementById('eodModal').classList.remove('show');}
+
+
+function fillInvCatFilter(){
+  const sel=document.getElementById('iCatFilter');if(!sel)return;
+  sel.innerHTML='<option value="">All Categories</option>'+allCats().map(cat=>`<option value="${cat}">${cat}</option>`).join('');
+}
+async function loadInvTable(){
+  const date=document.getElementById('iDate')?.value||today();
+  cbar('invCbar','invCmsg','loading','⏳ Loading…');
+  invDayData=await dbGetDay(date);
+  cbar('invCbar','invCmsg','ok','✅ Loaded '+Object.keys(invDayData).length+' records for '+fmtDate(date));
+  renderInvTable();
+}
+function renderInvTable(){
+  const wrap=document.getElementById('invTable');if(!wrap)return;
+  const date=document.getElementById('iDate')?.value||today();
+  const cat=document.getElementById('iCatFilter')?.value||'';
+  const q=(document.getElementById('iSearch')?.value||'').toLowerCase();
+  let rows=PRODUCTS.map(p=>{
+    const s=invDayData[p.id]||{};
+    const opening=s.opening!==undefined?s.opening:(p.opening||0);
+    const purchases=s.purchases!==undefined?s.purchases:0;
+    const closing=s.closing!==undefined?s.closing:null;
+    const available=opening+purchases;
+    const sold=closing!==null?Math.max(0,available-closing):null;
+    return {...p,opening,purchases,closing,available,sold,
+      revenue:sold!=null?sold*(p.price||0):0,
+      profit:sold!=null?sold*((p.price||0)-(p.cost||0)):0,
+      hasData:s.closing!==undefined||s.opening!==undefined||s.purchases!==undefined};
+  });
+  if(cat) rows=rows.filter(r=>r.cat===cat);
+  if(q)   rows=rows.filter(r=>r.name.toLowerCase().includes(q)||r.id.toLowerCase().includes(q));
+  if(!rows.length){wrap.innerHTML='<div class="empty">No products found.</div>';return;}
+  let html=`<table><thead><tr>
+    <th style="min-width:200px;">Product</th>
+    <th style="text-align:center;">Opening</th>
+    <th style="text-align:center;">Purchases</th>
+    <th style="text-align:center;">Available</th>
+    <th style="text-align:center;">Closing</th>
+    <th style="text-align:center;">Sold</th>
+    <th style="text-align:right;">Revenue ₹</th>
+    <th style="text-align:right;">Profit ₹</th>
+    <th style="text-align:center;">Edit</th>
+  </tr></thead><tbody>`;
+  rows.forEach(r=>{
+    const avColor=r.available===0?'var(--rd)':r.available<=5?'#E65100':'#1A1A1A';
+    const pc=r.profit>0?'var(--gn)':r.profit<0?'var(--rd)':'#1A1A1A';
+    const rowBg=r.hasData?(r.closing!==null?'#F7FFFA':'#FFFBF0'):'#fff';
+    html+=`<tr style="background:${rowBg};">
+      <td><div class="prod-name">${r.name}</div><div class="prod-id">${r.cat}</div></td>
+      <td style="text-align:center;color:var(--sub);">${r.opening}</td>
+      <td style="text-align:center;color:${r.purchases>0?'var(--bl)':'var(--sub)'};">${r.purchases>0?'+'+r.purchases:r.purchases}</td>
+      <td style="text-align:center;font-weight:700;color:${avColor};">${r.available}</td>
+      <td style="text-align:center;font-weight:600;color:${r.closing!==null?'var(--gn)':'var(--sub)'};">${r.closing!==null?r.closing:'—'}</td>
+      <td style="text-align:center;font-weight:600;">${r.sold!==null?r.sold:'—'}</td>
+      <td style="text-align:right;">${r.revenue>0?'₹'+r.revenue.toLocaleString('en-IN'):'—'}</td>
+      <td style="text-align:right;color:${pc};">${r.profit!==0?'₹'+r.profit.toLocaleString('en-IN'):'—'}</td>
+      <td style="text-align:center;"><button onclick="openEditInv('${r.id}','${date}')" style="padding:5px 12px;border:1.5px solid var(--or);border-radius:6px;background:var(--or1);color:var(--or2);font-size:12px;font-weight:600;cursor:pointer;">✏️ Edit</button></td>
+    </tr>`;
+  });
+  wrap.innerHTML=html+'</tbody></table>';
+}
+async function openEditInv(pid,date){
+  editInvPid=pid; editInvDate=date;
+  const s=invDayData[pid]||{};
+  const prod=PRODUCTS.find(p=>p.id===pid)||{};
+  document.getElementById('editInvProdName').textContent=prod.name+' · '+fmtDate(date);
+  document.getElementById('editOpening').value=s.opening!==undefined?s.opening:(prod.opening||0);
+  document.getElementById('editPurchases').value=s.purchases!==undefined?s.purchases:0;
+  document.getElementById('editClosing').value=s.closing!==undefined?s.closing:'';
+  document.getElementById('editPrice').value=prod.price||0;
+  document.getElementById('editCost').value=prod.cost||0;
+  document.getElementById('editInvModal').classList.add('show');
+}
+function closeEditInvModal(){document.getElementById('editInvModal').classList.remove('show');editInvPid=null;editInvDate=null;}
+async function saveEditInv(){
+  if(!editInvPid||!editInvDate)return;
+  const opening=parseInt(document.getElementById('editOpening').value)||0;
+  const purchases=parseInt(document.getElementById('editPurchases').value)||0;
+  const closingRaw=document.getElementById('editClosing').value;
+  const closing=closingRaw!==''?parseInt(closingRaw):null;
+  const ok=await dbSaveProduct(editInvDate,editInvPid,{opening,purchases,closing,ts:Date.now()});
+  if(ok){invDayData[editInvPid]={opening,purchases,closing};closeEditInvModal();renderInvTable();toast('✅ Record updated','ok');}
+  else toast('❌ Save failed','err');
+}
+
+// Wire up login buttons after module loads (fixes onclick timing on module scripts)
+document.querySelectorAll('[data-role]').forEach(btn => {
+  btn.addEventListener('click', () => selectRole(btn.dataset.role));
+});
+document.getElementById('loginBtn')?.addEventListener('click', doLogin);
+document.getElementById('loginPwInput')?.addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+
 </script>
 </body>
 </html>
